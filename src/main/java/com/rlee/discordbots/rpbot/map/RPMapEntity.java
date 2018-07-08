@@ -28,7 +28,15 @@ class RPMapEntity <E> {
 	void setEntity(E entity) {
 		this.entity = entity;
 	}
-	
+
+	RPCoordinate getCoordinate() {
+		return coordinate;
+	}
+
+	void setCoordinate(RPCoordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
 	/**
 	 * <p>Get a legend on what this map entity represents.
 	 * Returns a string with the output</p>

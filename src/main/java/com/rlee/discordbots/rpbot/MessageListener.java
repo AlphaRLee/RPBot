@@ -356,11 +356,12 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "map": {
 			RPMap rpMap = new RPMap();
-			rpMap.setAt(3, 3, 'c', "Camel");
-			rpMap.setAt(4, 0, '/', "Wall");
-			rpMap.setAt(5, 1, '/', "Wall");
-			rpMap.setAt(6, 2, '/', "Wall");
-			rpMap.setAt(7, 3, '-', "Wall");
+
+			rpMap.setAt(2, 3, 'c', "Camel");
+			rpMap.setAt(2, 4, 'd', "Dingo");
+			rpMap.setAt(1, 5, 'e', "Emu");
+			rpMap.setAt(1, 2, '/', "Wall");
+
 			rpMap.setAt(7, 4, '\u2588', "Wall");
 			rpMap.setAt(6, 4, '\u2588', "Wall");
 			rpMap.setAt(6, 5, '\u2588', "Wall");
