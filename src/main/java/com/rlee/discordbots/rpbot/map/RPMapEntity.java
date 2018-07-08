@@ -1,27 +1,31 @@
 package com.rlee.discordbots.rpbot.map;
 
-public class RPMapEntity <E> {
+class RPMapEntity <E> {
 	private char symbol;
 	private E entity;
-	
-	public RPMapEntity(char symbol, E entity) {
+
+	private RPCoordinate coordinate;
+
+	RPMapEntity(char symbol, E entity, RPCoordinate coordinate) {
 		this.symbol = symbol;	//TODO Add support for 2D shape instead of single char
+								//TODO Add support for entity larger than 1 cell
 		this.entity = entity;
+		this.coordinate = coordinate;
 	}
 	
-	public char getSymbol() {
+	char getSymbol() {
 		return symbol;
 	}
 	
-	public void setSymbol(char symbol) {
+	void setSymbol(char symbol) {
 		this.symbol = symbol;
 	}
 	
-	public E getEntity() {
+	E getEntity() {
 		return entity;
 	}
 	
-	public void setEntity(E entity) {
+	void setEntity(E entity) {
 		this.entity = entity;
 	}
 	
@@ -33,7 +37,7 @@ public class RPMapEntity <E> {
 	 * and entity represents {@link #getEntity()} with the {@link #toString()} method invoked
 	 * @return The string representation of this entity in a legend or null if entity is set to null
 	 */
-	public String getLegend() {
+	String getLegend() {
 		if (entity == null) {
 			return null;
 		}

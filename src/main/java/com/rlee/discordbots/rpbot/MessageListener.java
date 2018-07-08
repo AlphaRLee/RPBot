@@ -7,7 +7,6 @@ import com.rlee.discordbots.rpbot.command.CommandParser;
 import com.rlee.discordbots.rpbot.dice.RollCalculator;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.map.RPMap;
-import com.rlee.discordbots.rpbot.map.RPMapEntity;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
@@ -357,14 +356,14 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "map": {
 			RPMap rpMap = new RPMap();
-			rpMap.setAt(3, 3, new RPMapEntity<String>('c', "Camel"));
-			rpMap.setAt(4, 0, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(5, 1, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(6, 2, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(7, 3, new RPMapEntity<String>('-', "Wall"));
-			rpMap.setAt(7, 4, new RPMapEntity<String>('\u2588', "Wall"));
-			rpMap.setAt(6, 4, new RPMapEntity<String>('\u2588', "Wall"));
-			rpMap.setAt(6, 5, new RPMapEntity<String>('\u2588', "Wall"));
+			rpMap.setAt(3, 3, 'c', "Camel");
+			rpMap.setAt(4, 0, '/', "Wall");
+			rpMap.setAt(5, 1, '/', "Wall");
+			rpMap.setAt(6, 2, '/', "Wall");
+			rpMap.setAt(7, 3, '-', "Wall");
+			rpMap.setAt(7, 4, '\u2588', "Wall");
+			rpMap.setAt(6, 4, '\u2588', "Wall");
+			rpMap.setAt(6, 5, '\u2588', "Wall");
 			channel.sendMessage("TEST Map generated:\n" + rpMap.showMap()).queue();
 		}
 		

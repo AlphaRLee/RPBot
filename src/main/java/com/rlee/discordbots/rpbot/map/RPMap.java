@@ -2,6 +2,7 @@ package com.rlee.discordbots.rpbot.map;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import net.dv8tion.jda.core.entities.Message;
@@ -12,9 +13,12 @@ import net.dv8tion.jda.core.entities.Message;
  *
  */
 public class RPMap {
+	@Deprecated
 	private ArrayList<ArrayList<RPMapEntity<?>>> entityMap; //Visual map that contains data on region
-	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all entities that are generated
-	
+
+	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all unique entities that are generated
+	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map
+
 	private boolean showBorder = true;
 	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
 	private static final char colDividerChar = '|';
@@ -66,8 +70,9 @@ public class RPMap {
 	}
 		
 	@Deprecated
-	public void setAt(int rowIndex, int colIndex, RPMapEntity entity) {
+	public <E> void setAt(int rowIndex, int colIndex, char c, E e) {
 		//TODO Delete this test function and use a hashmap implementation
+		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, new RPCoordinate(rowIndex, colIndex));
 		ArrayList<RPMapEntity<?>> row = entityMap.get(rowIndex);
 		row.set(colIndex, entity);
 	}

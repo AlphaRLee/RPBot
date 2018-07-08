@@ -2,27 +2,25 @@ package com.rlee.discordbots.rpbot.map;
 
 public class RPCoordinate {
 	private int row, col;	//Row number and column number, using traditional 2D array notation
-	
-	public RPCoordinate(int row, int col) {
-		this.setRow(row);
-		this.setCol(col);
+
+	RPCoordinate(int row, int col) {
+		this.row = row;
+		this.col = col;
 	}
 
-	public int getRow() {
+	int getRow() {
 		return row;
 	}
 
-	public void setRow(int row) {
+	void setRow(int row) {
 		this.row = row;
 	}
 
-	public int getCol() {
+	int getCol() {
 		return col;
 	}
 
-	public void setCol(int col) {
+	void setCol(int col) {
 		this.col = col;
 	}
-	
-	
 }
