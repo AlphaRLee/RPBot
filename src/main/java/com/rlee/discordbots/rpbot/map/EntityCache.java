@@ -7,22 +7,19 @@ import java.util.*;
 /**
  * A utility to cache information from an RPMap about the entities stored within
  */
-class EntityCache implements Iterable<RPMapEntity<?>> {
+class EntityCache {
 	private ArrayList<RPMapEntity<?>> cachedEntities;
 	private RPCoordinate bottomLeftCorner, topRightCorner; //Corners of the cached region, inclusive
 
 	private boolean hasBeenBuilt;
 
-	private Iterator<RPMapEntity<?>> iterator;
-
 	EntityCache() {
 		hasBeenBuilt = false;
 	}
 
-	//TODO Delete me!
-//	ArrayList<RPMapEntity<?>> getCachedEntities() {
-//		return cachedEntities;
-//	}
+	ArrayList<RPMapEntity<?>> getCachedEntities() {
+		return cachedEntities;
+	}
 
 	RPCoordinate getBottomLeftCorner() {
 		return bottomLeftCorner;
@@ -77,25 +74,5 @@ class EntityCache implements Iterable<RPMapEntity<?>> {
 //		Collections.sort(cachedEntities, Comparator.comparing(RPMapEntity::getCoordinate));
 
 		Collections.sort(cachedEntities, (leftEntity, rightEntity) -> leftEntity.getCoordinate().compareTo(rightEntity.getCoordinate(), invertRows));
-	}
-
-	/**
-	 * Returns an iterator over elements of type {@code T}.
-	 *
-	 * @return an Iterator.
-	 */
-	@Override
-	public Iterator<RPMapEntity<?>> iterator() {
-		iterator = cachedEntities.iterator();
-		return iterator;
-	}
-
-	/**
-	 * Return the last iterator created from the {@link #iterator} method.
-	 * Useful for iterating over the course of multiple methods
-	 * @return
-	 */
-	Iterator<RPMapEntity<?>> existingIterator() {
-		return iterator;
 	}
 }
