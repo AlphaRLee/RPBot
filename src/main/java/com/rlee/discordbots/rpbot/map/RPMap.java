@@ -10,6 +10,8 @@ import net.dv8tion.jda.core.entities.Message;
  *
  */
 public class RPMap {
+	private String name;
+
 	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map
 	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all unique entities that are generated
 
@@ -17,10 +19,10 @@ public class RPMap {
 	private boolean isCacheUpToDate;
 
 	private RPMapPrinter mapPrinter;
-
 	private Message sourceMessage;
 	
-	public RPMap() {
+	public RPMap(String name) {
+		this.name = name;
 		entities = new LinkedList<>();
 		entityLookup = new LinkedHashMap<>();
 
@@ -29,7 +31,11 @@ public class RPMap {
 
 		mapPrinter = new RPMapPrinter();
 	}
-	
+
+	public String getName() {
+		return name;
+	}
+
 	public void setSourceMessage(Message sourceMessage) {
 		this.sourceMessage = sourceMessage;
 	}

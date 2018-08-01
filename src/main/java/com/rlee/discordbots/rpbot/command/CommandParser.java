@@ -3,24 +3,70 @@ package com.rlee.discordbots.rpbot.command;
 import com.rlee.discordbots.rpbot.MessageListener;
 import com.rlee.discordbots.rpbot.RPBot;
 
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
+
+import java.awt.*;
+import java.util.Random;
 
 public class CommandParser {
 
 	private String[] args;
 	private TextChannel channel;	
-	
+
+	private String lastUsageMessage;
+	private String errorDescription;
+
 	public CommandParser(String[] args, TextChannel channel) {
 		this.args = args;
 		this.channel = channel;
+
+		lastUsageMessage = "";
+		errorDescription = null;
 	}
-	
+
+	public String getLastUsageMessage() {
+		return lastUsageMessage;
+	}
+
+	public String getErrorDescription() {
+		return errorDescription;
+	}
+
 	/**
-	 * Print an error message to the text channel
+	 * Set the description message that will accompany the error.
+	 * Set to null or empty string to omit
+	 * @param errorDescription
+	 */
+	public void setErrorDescription(String errorDescription) {
+		this.errorDescription = errorDescription;
+	}
+
+	/**
+	 * Print an error message to the text channel showing proper usage, with the error description following if set.
 	 * @param errorMessage
 	 */
-	private void sendError(String errorMessage) {
-		channel.sendMessage(errorMessage).queue();
+	public void sendUsageError(String errorMessage) {
+		String errMsg = RPBot.isEmptyString(errorMessage) ? "" : errorMessage;
+		String errDesc = RPBot.isEmptyString(errorDescription) ? "" : errorDescription;
+
+		String[] authorDescription = {
+				"the wise",
+				"the helpful",
+				"did you try turning it off and on again?",
+				"please try again",
+				"the confused",
+				"Sorry, my English isn't very good. Do you speak binary?",
+				"Don't blame it on me, blame it on the RNG!"
+		};
+
+		EmbedBuilder msgBuilder = new EmbedBuilder();
+		msgBuilder.setColor(Color.RED);
+		msgBuilder.setAuthor("RP Bot - " + authorDescription[new Random().nextInt(authorDescription.length)]);
+		msgBuilder.setTitle(errMsg, null);
+		msgBuilder.setDescription(errDesc);
+		channel.sendMessage(msgBuilder.build()).queue();
 	}
 	
 	 /**
@@ -30,30 +76,37 @@ public class CommandParser {
 	  * whitespace character immediately proceeding it is removed.<br/>
 	  * E.g. an optionalParameters array looking like: ["name", "gender, "\bage"] would look like: <br/>
 	  * [name] [gender][age]
-	  * @param length Minimum number of args
 	  * @param requiredParameters parameters expected by inputed command for proper execution, excluding the command name itself
 	  * @param optionalParameters parameters accepted by inputed command for execution
 	  * @return True if valid, false if not
 	  */
 	public boolean validateParameterLength(String[] requiredParameters, String... optionalParameters) {
+		boolean result = false;
 		if (args.length > requiredParameters.length) {
 			//More args than parameters (i.e. correct number of parameters following command name)
-			return true; //Happy path
+			result = true; //Happy path
 		}
-		
-		StringBuilder errorMessage = new StringBuilder("Format: ").append(MessageListener.COMMAND_PREFIX).append(args[0]);
+
+		lastUsageMessage = buildUsageErrorMessage(requiredParameters, optionalParameters);
+		if (!result) {
+			sendUsageError(lastUsageMessage);
+		}
+		return result;
+	}
+
+	private String buildUsageErrorMessage(String[] requiredParameters, String[] optionalParameters) {
+		StringBuilder errorMessage = new StringBuilder("Usage: ").append(MessageListener.COMMAND_PREFIX).append(args[0]);
 		for (String reqParam : requiredParameters) {
 			errorMessage.append(formatParameter(reqParam, '<', '>'));
 		}
-		
+
 		for (String opParam: optionalParameters) {
 			errorMessage.append(formatParameter(opParam, '[', ']'));
 		}
-		
-		sendError(errorMessage.toString());	
-		return false;
+
+		return errorMessage.toString();
 	}
-	
+
 	/**
 	 * Format the inputed parameter to either look like
 	 * " (parameter)"

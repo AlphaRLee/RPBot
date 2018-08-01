@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.rlee.discordbots.rpbot.command.CommandParser;
+import com.rlee.discordbots.rpbot.command.MapCommandHandler;
 import com.rlee.discordbots.rpbot.dice.RollCalculator;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.map.RPMap;
@@ -25,7 +26,6 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 public class MessageListener extends ListenerAdapter {
 
 	public static String COMMAND_PREFIX = "&";	//Official RPBot
-//	public static String COMMAND_PREFIX = "^";	//RPTester
 	private RollCalculator rollCalculator;
 	
 	public MessageListener() {
@@ -69,7 +69,7 @@ public class MessageListener extends ListenerAdapter {
 
 			MessageBuilder outputBuilder = new MessageBuilder();
 			outputBuilder.append(output);
-			// outputBuilder.setColor(Color.ORANGE);
+//			outputBuilder.setColor(Color.ORANGE);
 
 			channel.sendMessage(outputBuilder.build()).queue();
 		}
@@ -110,7 +110,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		
 		case "alias": case "multialias": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias name", "full name"}, new String[] {"alias 2", "full 2", "alias 3", "full 3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name", "full\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
 				break;
 			}
 			
@@ -161,7 +161,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "listattr": case "listattribute": case "attr": case "attribute": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias name"}, new String[] {"alias 2", "full 2", "alias 3", "full 3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
 				break;
 			}
 			
@@ -189,7 +189,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "addcharid": case "addcharfromid": case "addcharacterfromid": {
-			if (!cmdParser.validateParameterLength(new String[] {"#channel", "message ID"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"#channel", "message\\_ID"})) {
 				break;
 			}
 			
@@ -215,7 +215,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "delchar": case "deletecharacter": {
-			if (!cmdParser.validateParameterLength(new String[] {"name"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"character"})) {
 				break;
 			}
 			
@@ -265,7 +265,7 @@ public class MessageListener extends ListenerAdapter {
 			 * Eg: &set stam 20/30 Bob
 			 */
 			
-			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, new String[] {"\b/maxvalue", "character"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, new String[] {"\b/max\\_value", "character"})) {
 				break;
 			}
 			
@@ -355,17 +355,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "map": {
-			RPMap rpMap = new RPMap();
-
-			rpMap.setAt(2, 3, 'c', "Camel");
-			rpMap.setAt(2, 4, 'd', "Dingo");
-			rpMap.setAt(1, 5, 'e', "Emu");
-			rpMap.setAt(1, 2, '/', "Wall");
-
-			rpMap.setAt(7, 4, '\u2588', "Wall");
-			rpMap.setAt(6, 4, '\u2588', "Wall");
-			rpMap.setAt(6, 5, '\u2588', "Wall");
-			channel.sendMessage("TEST Map generated:\n" + rpMap.showMap()).queue();
+			MapCommandHandler mapCommandHandler = new MapCommandHandler(args, member, game, channel);
 		}
 		
 		}
@@ -414,7 +404,7 @@ public class MessageListener extends ListenerAdapter {
 	
 	private void claimProfileCmd(String[] args, Member member, RPGame game, MessageChannel channel) {
 		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
-		if (!cmdParser.validateParameterLength(new String[] {"profile name"})) {
+		if (!cmdParser.validateParameterLength(new String[] {"character"})) {
 			return;
 		}
 		
@@ -457,12 +447,6 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		channel.sendMessage(member.getAsMention() + " has unclaimed the character profile **" + profile.getName() + "**.").queue();
-	}
-
-	private void showMapCmd(String[] args, Member member, MessageChannel channel) {
-		//FIXME Get the map to show
-
-		
 	}
 
 	/**
