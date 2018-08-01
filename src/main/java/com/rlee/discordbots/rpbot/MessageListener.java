@@ -458,7 +458,13 @@ public class MessageListener extends ListenerAdapter {
 		
 		channel.sendMessage(member.getAsMention() + " has unclaimed the character profile **" + profile.getName() + "**.").queue();
 	}
-	
+
+	private void showMapCmd(String[] args, Member member, MessageChannel channel) {
+		//FIXME Get the map to show
+
+		
+	}
+
 	/**
 	 * Add the numeric value from args[0] into the attribute from args[1] 
 	 * @param args arguments passed in the order of operation, attribute name, duration (optional) and profile name (optional)
@@ -487,8 +493,7 @@ public class MessageListener extends ListenerAdapter {
 		Attribute attribute = null;
 		int duration = INVALID_VAL;
 		CharProfile profile = game.getProfileRegistry().getProfile(member);
-		
-		
+
 		if (args.length < ATTR_ARG + 1) {
 			channel.sendMessage("Format: " + COMMAND_PREFIX + args[OPERATOR_ARG] + " <attribute> [duration] [character]").queue();
 			return;

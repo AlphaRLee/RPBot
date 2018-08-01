@@ -10,11 +10,8 @@ import net.dv8tion.jda.core.entities.Message;
  *
  */
 public class RPMap {
-	@Deprecated
-	private ArrayList<ArrayList<RPMapEntity<?>>> entityMap; //Visual map that contains data on region
-
-	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all unique entities that are generated
 	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map
+	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all unique entities that are generated
 
 	private EntityCache entityCache;
 	private boolean isCacheUpToDate;
@@ -25,7 +22,6 @@ public class RPMap {
 	
 	public RPMap() {
 		entities = new LinkedList<>();
-		entityMap = new ArrayList<>();
 		entityLookup = new LinkedHashMap<>();
 
 		entityCache = new EntityCache();
@@ -37,11 +33,10 @@ public class RPMap {
 	public void setSourceMessage(Message sourceMessage) {
 		this.sourceMessage = sourceMessage;
 	}
-		
-	@Deprecated
+
 	public <E> void setAt(int rowIndex, int colIndex, char c, E e) {
 		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, new RPCoordinate(rowIndex, colIndex));
-		
+
 		entities.add(entity);
 		checkAndModifyLookup(entity);
 	}
@@ -117,7 +112,6 @@ public class RPMap {
 	private RPCoordinate calculateTopRightCorner(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
 		return new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
 	}
-
 
 	/**
 	 * Get whether or not the given coordinate is between the bottom left corner and the top right corner, inclusively
