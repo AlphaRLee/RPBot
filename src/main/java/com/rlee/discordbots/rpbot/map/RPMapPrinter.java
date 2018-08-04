@@ -54,11 +54,11 @@ class RPMapPrinter {
 	}
 
 	/**
-	 * Get the entity map as a string starting with the given coordinates for the top-left corner
-	 * @param leftEdge
-	 * @param bottomEdge
+	 * Get the entity map as a string starting with the given coordinates for the bottom-left corner
+	 * @param leftCol
+	 * @param bottomRow
 	 */
-	String showMap(int leftEdge, int bottomEdge, int rowCount, int colCount, ArrayList<RPMapEntity<?>> sortedCachedEntities) {
+	String showMap(int bottomRow, int leftCol, int rowCount, int colCount, ArrayList<RPMapEntity<?>> sortedCachedEntities) {
 		iterator = sortedCachedEntities.listIterator();
 		if (iterator.hasNext()) {
 			nextEntity = iterator.next();
@@ -68,8 +68,8 @@ class RPMapPrinter {
 		this.colCount = colCount;
 
 		int minRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
-		maxRowIndexWidth = Math.max(getDigits(bottomEdge).length, getDigits(bottomEdge + minRowCount).length);
-		maxColIndexWidth = Math.max(getDigits(leftEdge).length, getDigits(leftEdge + minRowCount).length);
+		maxRowIndexWidth = Math.max(getDigits(bottomRow).length, getDigits(bottomRow + minRowCount).length);
+		maxColIndexWidth = Math.max(getDigits(leftCol).length, getDigits(leftCol + minRowCount).length);
 		StringBuilder blankRowIndexBuilder = new StringBuilder();
 		for (int i = 0; i < maxRowIndexWidth; i++) {
 			blankRowIndexBuilder.append(' ');
@@ -88,8 +88,8 @@ class RPMapPrinter {
 		}
 
 		//NOTE Reverse iteration used to flip Y axis
-		for (int i = bottomEdge + minRowCount - 1; i >= bottomEdge; i--) {
-			sb.append(showRow(i, leftEdge, bottomEdge));
+		for (int i = bottomRow + minRowCount - 1; i >= bottomRow; i--) {
+			sb.append(showRow(i, leftCol));
 
 			if (showBorder) {
 				sb.append(rowDivider).append("\n");
@@ -103,10 +103,10 @@ class RPMapPrinter {
 	 * Print one row of the entity map.
 	 * Always appends a newline character to the end
 	 * @param rowIndex
-	 * @param leftEdge
+	 * @param leftCol
 	 * @return
 	 */
-	private String showRow(int rowIndex, int leftEdge, int bottomEdge) {
+	private String showRow(int rowIndex, int leftCol) {
 		int minColCount = Math.min(colCount, maxColCount);
 
 		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
@@ -129,8 +129,8 @@ class RPMapPrinter {
 			sb.append(colDividerChar);
 //		}
 
-		RPCoordinate coord = new RPCoordinate(rowIndex, leftEdge);
-		for (int i = leftEdge; i < leftEdge + minColCount; i++) {
+		RPCoordinate coord = new RPCoordinate(rowIndex, leftCol);
+		for (int i = leftCol; i < leftCol + minColCount; i++) {
 			coord.setCol(i);
 			sb.append(showEntityCell(coord));
 
