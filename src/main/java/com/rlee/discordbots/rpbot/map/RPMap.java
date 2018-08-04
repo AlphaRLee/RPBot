@@ -71,6 +71,10 @@ public class RPMap {
 		return showMap(0, 0, mapPrinter.getRowCount(), mapPrinter.getColCount());
 	}
 
+	public String showMap(int leftEdge, int bottomEdge) {
+		return showMap(leftEdge, bottomEdge, mapPrinter.getRowCount(), mapPrinter.getColCount());
+	}
+
 	public String showMap(int leftEdge, int bottomEdge, int rowCount, int colCount) {
 		checkBuildCache(new RPCoordinate(bottomEdge, leftEdge), rowCount, colCount);
 		return mapPrinter.showMap(leftEdge, bottomEdge, rowCount, colCount, entityCache.getCachedEntities());

@@ -88,6 +88,7 @@ public class MapCommandHandler {
 
 		//FIXME Remove test sample
 		RPMap rpMap = new RPMap("Test");
+		rpMap.setAt(-1, -2, 'b', "Brontosaurus");
 		rpMap.setAt(2, 3, 'c', "Camel");
 		rpMap.setAt(2, 4, 'd', "Dino");
 		rpMap.setAt(1, 5, 'e', "Elephant");
@@ -104,6 +105,6 @@ public class MapCommandHandler {
 			return;
 		}
 
-		channel.sendMessage(map.showMap()).queue();
+		channel.sendMessage(map.showMap(0, 0)).queue();
 	}
 }

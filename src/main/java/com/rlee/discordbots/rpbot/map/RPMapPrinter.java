@@ -15,14 +15,18 @@ class RPMapPrinter {
 
 	private int maxCharWidth = 3;
 	private int maxCharHeight = 1;
-	private int maxRowCount = 8;
-	private int maxColCount = 8;
+	private int maxRowCount = 10;
+	private int maxColCount = 10;
 
 	private int rowCount;
 	private int colCount;
 
+	private int maxRowIndexWidth;
+	private int maxColIndexWidth;
+
 	private String rowDivider = null;
 	private String blankInnerRow = null;
+	private String blankRowIndex;
 
 	RPMapPrinter() {
 		this(8, 8);
@@ -63,6 +67,15 @@ class RPMapPrinter {
 		this.rowCount = rowCount;
 		this.colCount = colCount;
 
+		int minRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
+		maxRowIndexWidth = Math.max(getDigits(bottomEdge).length, getDigits(bottomEdge + minRowCount).length);
+		maxColIndexWidth = Math.max(getDigits(leftEdge).length, getDigits(leftEdge + minRowCount).length);
+		StringBuilder blankRowIndexBuilder = new StringBuilder();
+		for (int i = 0; i < maxRowIndexWidth; i++) {
+			blankRowIndexBuilder.append(' ');
+		}
+		blankRowIndex = blankRowIndexBuilder.toString();
+
 		StringBuilder sb = new StringBuilder("```\n");
 
 		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
@@ -74,10 +87,9 @@ class RPMapPrinter {
 			sb.append(rowDivider).append("\n");
 		}
 
-		int minRowCount = Math.min(rowCount, maxRowCount);
 		//NOTE Reverse iteration used to flip Y axis
 		for (int i = bottomEdge + minRowCount - 1; i >= bottomEdge; i--) {
-			sb.append(showRow(i, leftEdge));
+			sb.append(showRow(i, leftEdge, bottomEdge));
 
 			if (showBorder) {
 				sb.append(rowDivider).append("\n");
@@ -94,7 +106,7 @@ class RPMapPrinter {
 	 * @param leftEdge
 	 * @return
 	 */
-	private String showRow(int rowIndex, int leftEdge) {
+	private String showRow(int rowIndex, int leftEdge, int bottomEdge) {
 		int minColCount = Math.min(colCount, maxColCount);
 
 		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
@@ -112,9 +124,10 @@ class RPMapPrinter {
 			blankInnerRowCount++;
 		}
 
-		if (showBorder) {
+		sb.append(showRowIndex(rowIndex));
+//		if (showBorder) {
 			sb.append(colDividerChar);
-		}
+//		}
 
 		RPCoordinate coord = new RPCoordinate(rowIndex, leftEdge);
 		for (int i = leftEdge; i < leftEdge + minColCount; i++) {
@@ -188,12 +201,12 @@ class RPMapPrinter {
 	 * @return The string representation of a row
 	 */
 	private String buildInnerRow(char lengthChar, char endChar) {
-		int minRowCount = Math.min(rowCount, maxRowCount);
+		int minColCount = Math.min(colCount, maxColCount);
 
-		StringBuilder innerRowBuilder = new StringBuilder();
-		if (showBorder) {
+		StringBuilder innerRowBuilder = new StringBuilder(blankRowIndex);
+//		if (showBorder) {
 			innerRowBuilder.append(endChar);
-		}
+//		}
 
 		StringBuilder cellBuilder = new StringBuilder();
 		for (int i = 0; i < maxCharWidth; i++) {
@@ -204,10 +217,94 @@ class RPMapPrinter {
 		}
 		String blankRowUnit = cellBuilder.toString();
 
-		for (int i = 0; i < minRowCount; i++) {
+		for (int i = 0; i < minColCount; i++) {
 			innerRowBuilder.append(blankRowUnit);
 		}
 
 		return innerRowBuilder.toString();
+	}
+
+	private String showRowIndex(int index) {
+		int[] digits = getPaddedDigits(index, maxRowIndexWidth);
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+
+		//Edge case: Explicitly search for index == 0 for efficiency
+		if (index == 0) {
+			while (i < digits.length - 1) {
+				sb.append(' ');
+				i++;
+			}
+			return sb.append('0').toString();
+		}
+
+		while (digits[i] == 0) {
+			sb.append(' ');
+			i++;
+		}
+
+		//Edge case: The only -1 instance represents a - char
+		if (digits[i] < 0) {
+			sb.append('-');
+			i++;
+		}
+
+		while (i < digits.length) {
+			sb.append(Integer.toString(digits[i]));
+			i++;
+		}
+
+		return sb.toString();
+	}
+
+	private int[] getPaddedDigits(int index, int maxIndexWidth) {
+		//TODO Implement support for negative indices
+		int[] indexDigits = getDigits(index);
+
+		int[] paddedDigits = new int[maxIndexWidth];
+		int i = 0;
+		while (i < maxIndexWidth - indexDigits.length) {
+			paddedDigits[i] = 0;
+			i++;
+		}
+
+		//NOTE: i has not been reset to 0
+		int j = 0; //Counter for digits
+		while (j < indexDigits.length ) {
+			paddedDigits[i] = indexDigits[j];
+			i++;
+			j++;
+		}
+
+		return paddedDigits;
+	}
+
+	private int[] getDigits(int n) {
+		return getDigits(n, 10);
+	}
+
+	private int[] getDigits(int n, int radix) {
+		int digitCount = 0;
+		int i = Math.abs(n);
+		while (i > 0) {
+			i /= radix;
+			digitCount++;
+		}
+
+		boolean negativeSign = (n < 0);
+		int[] digits = new int[digitCount + (negativeSign ? 1 : 0)];
+		i = Math.abs(n);
+		int j = digitCount - 1 + (negativeSign ? 1 : 0) ;
+		while (i > 0) {
+			digits[j] = i % radix;
+			i /= radix;
+			j--;
+		}
+
+		if (negativeSign) {
+			digits[0] = -1;
+		}
+
+		return digits;
 	}
 }
