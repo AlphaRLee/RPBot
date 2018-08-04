@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.rlee.discordbots</groupId>
     <artifactId>RPBot</artifactId>
-    <version>0.2.1</version>
+    <version>0.3</version>
 
     <repositories>
         <repository>
@@ -11,10 +11,6 @@
             <name>jcenter-bintray</name>
             <url>http://jcenter.bintray.com</url>
         </repository>
-        <!-- repository> <id>bungeecord-repo</id> <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            </repository> <repository> <id>jitpack.io</id> <url>https://jitpack.io</url>
-            </repository> <repository> <id>mvnrepository.com</id> <url>mvnrepository.com</url>
-            </repository -->
     </repositories>
 
     <dependencies>
@@ -49,27 +45,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!--plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.rlee.discordbots.rpbot.RPBot</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
