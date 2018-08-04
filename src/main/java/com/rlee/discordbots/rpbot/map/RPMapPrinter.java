@@ -13,6 +13,8 @@ class RPMapPrinter {
 	private static final char cornerDividerChar = '+';
 	private static final char blankChar = ' ';
 
+	private static final int ALPHA_ZERO_INDEX = -999;
+
 	private int maxCharWidth = 3;
 	private int maxCharHeight = 1;
 	private int maxRowCount = 10;
@@ -69,7 +71,7 @@ class RPMapPrinter {
 
 		int minRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
 		maxRowIndexWidth = Math.max(getDigits(bottomRow).length, getDigits(bottomRow + minRowCount).length);
-		maxColIndexWidth = Math.max(getDigits(leftCol).length, getDigits(leftCol + minRowCount).length);
+		maxColIndexWidth = Math.max(getDigits(leftCol, RPMap.ALPHA_RADIX).length, getDigits(leftCol + minRowCount, RPMap.ALPHA_RADIX).length);
 		StringBuilder blankRowIndexBuilder = new StringBuilder();
 		for (int i = 0; i < maxRowIndexWidth; i++) {
 			blankRowIndexBuilder.append(' ');
@@ -79,23 +81,21 @@ class RPMapPrinter {
 		StringBuilder sb = new StringBuilder("```\n");
 
 		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
-		if (showBorder) {
-			if (rowDivider == null) {
-				rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
-			}
-
-			sb.append(rowDivider).append("\n");
+		if (rowDivider == null) {
+			rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
 		}
 
 		//NOTE Reverse iteration used to flip Y axis
 		for (int i = bottomRow + minRowCount - 1; i >= bottomRow; i--) {
-			sb.append(showRow(i, leftCol));
-
 			if (showBorder) {
 				sb.append(rowDivider).append("\n");
 			}
+
+			sb.append(showRow(i, leftCol));
 		}
 
+		sb.append(rowDivider).append("\n");
+		sb.append(showColIndex(leftCol));
 		return sb.append("```").toString();
 	}
 
@@ -107,7 +107,7 @@ class RPMapPrinter {
 	 * @return
 	 */
 	private String showRow(int rowIndex, int leftCol) {
-		int minColCount = Math.min(colCount, maxColCount);
+		int netColCount = Math.min(colCount, maxColCount);
 
 		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
 		StringBuilder sb = new StringBuilder();
@@ -125,12 +125,10 @@ class RPMapPrinter {
 		}
 
 		sb.append(showRowIndex(rowIndex));
-//		if (showBorder) {
-			sb.append(colDividerChar);
-//		}
+		sb.append(colDividerChar);
 
 		RPCoordinate coord = new RPCoordinate(rowIndex, leftCol);
-		for (int i = leftCol; i < leftCol + minColCount; i++) {
+		for (int i = leftCol; i < leftCol + netColCount; i++) {
 			coord.setCol(i);
 			sb.append(showEntityCell(coord));
 
@@ -201,12 +199,10 @@ class RPMapPrinter {
 	 * @return The string representation of a row
 	 */
 	private String buildInnerRow(char lengthChar, char endChar) {
-		int minColCount = Math.min(colCount, maxColCount);
+		int netColCount = Math.min(colCount, maxColCount);
 
 		StringBuilder innerRowBuilder = new StringBuilder(blankRowIndex);
-//		if (showBorder) {
-			innerRowBuilder.append(endChar);
-//		}
+		innerRowBuilder.append(endChar);
 
 		StringBuilder cellBuilder = new StringBuilder();
 		for (int i = 0; i < maxCharWidth; i++) {
@@ -217,7 +213,7 @@ class RPMapPrinter {
 		}
 		String blankRowUnit = cellBuilder.toString();
 
-		for (int i = 0; i < minColCount; i++) {
+		for (int i = 0; i < netColCount; i++) {
 			innerRowBuilder.append(blankRowUnit);
 		}
 
@@ -257,9 +253,77 @@ class RPMapPrinter {
 		return sb.toString();
 	}
 
+	private String showColIndex(int leftCol) {
+		int netColCount = Math.min(colCount, maxColCount);
+		int[][] numericColIndices = new int[netColCount][maxColIndexWidth];
+
+		for (int i = 0, j = leftCol; i < netColCount; i++, j++) {
+			numericColIndices[i] = getPaddedDigits(j, maxColIndexWidth, RPMap.ALPHA_RADIX);
+
+			//Edge case
+			if (j % RPMap.ALPHA_RADIX == 0) {
+				numericColIndices[i][maxColIndexWidth - 1] = ALPHA_ZERO_INDEX;
+			}
+		}
+
+		StringBuilder sb = new StringBuilder();
+		//NOTE: Performing "transposed" 2d array iteration
+		for (int i = 0; i < maxColIndexWidth; i++) {
+			sb.append(blankRowIndex).append(blankChar);
+			for (int j = 0; j < netColCount; j++) {
+				sb.append(showColIndexCell(numericColIndices[j][i]));
+
+				if (showBorder) {
+					sb.append(blankChar);
+				}
+			}
+			sb.append('\n');
+		}
+
+		return sb.toString();
+	}
+
+	private String showColIndexCell(int indexDigit) {
+		StringBuilder sb = new StringBuilder();
+		int blankCharCount = (int) maxCharWidth / 2; //Integer divison
+		boolean isEven = maxCharWidth % 2 == 0;
+
+		//Left padding
+		if (isEven) {
+			blankCharCount--;
+		}
+		for (int i = 0; i < blankCharCount; i++) {
+			sb.append(blankChar);
+		}
+		if (isEven) {
+			blankCharCount++;
+		}
+
+		if (indexDigit == ALPHA_ZERO_INDEX) {
+			sb.append(RPMap.ALPHA_ZERO_CHAR);
+		} else if (indexDigit == 0) {
+			sb.append(blankChar);
+		} else if (indexDigit < 0) {
+			sb.append('-'); //Negative sign symbol
+		} else {
+			sb.append((char) ('A' + indexDigit - 1));
+		}
+
+		//Right padding
+		for (int i = 0; i < blankCharCount; i++) {
+			sb.append(blankChar);
+		}
+
+		return sb.toString();
+	}
+
 	private int[] getPaddedDigits(int index, int maxIndexWidth) {
+		return getPaddedDigits(index, maxIndexWidth, 10);
+	}
+
+	private int[] getPaddedDigits(int index, int maxIndexWidth, int radix) {
 		//TODO Implement support for negative indices
-		int[] indexDigits = getDigits(index);
+		int[] indexDigits = getDigits(index, radix);
 
 		int[] paddedDigits = new int[maxIndexWidth];
 		int i = 0;

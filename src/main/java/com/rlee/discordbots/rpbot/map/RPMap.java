@@ -10,6 +10,9 @@ import net.dv8tion.jda.core.entities.Message;
  *
  */
 public class RPMap {
+	public static final int ALPHA_RADIX = 27; //Base 27 system: .=0 A=1 B=2 ... y=25 Z=26 A.=27 AA=28
+	public static final char ALPHA_ZERO_CHAR = '.'; //Does that look weird? Yes, that looks very weird. Base 27 numbering system!
+
 	private String name;
 
 	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map
