@@ -1,9 +1,9 @@
-package com.rlee.discordbots.rpbot.command;
+package com.rlee.discordbots.rpbot.map;
 
 import com.rlee.discordbots.rpbot.MessageListener;
-import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
+import com.rlee.discordbots.rpbot.command.CommandParser;
 import com.rlee.discordbots.rpbot.game.RPGame;
-import com.rlee.discordbots.rpbot.map.RPMap;
 import com.rlee.discordbots.rpbot.regitstry.MapRegistry;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.MessageChannel;
@@ -17,18 +17,9 @@ public class MapCommandHandler {
 	private MapRegistry mapRegistry;
 	private CommandParser cmdParser;
 
-	public MapCommandHandler(String[] args, Member sender, RPGame game, MessageChannel channel) {
-		this.sender = sender;
-		this.game = game;
-		this.channel = channel;
-		this.mapRegistry = game.getMapRegistry();
+	public void handleCommand(String[] args, Member sender, RPGame game, MessageChannel channel) {
+		setup(args, sender, game, channel);
 
-		cmdParser = new CommandParser(args, (TextChannel) channel);
-
-		handleCommand(args);
-	}
-
-	private void handleCommand(String[] args) {
 		cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
 				+  "\tshow, move, set, legend, list, new, delete");
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
@@ -61,10 +52,18 @@ public class MapCommandHandler {
 		}
 	}
 
+	private void setup(String[] args, Member sender, RPGame game, MessageChannel channel) {
+		this.sender = sender;
+		this.game = game;
+		this.channel = channel;
+		this.mapRegistry = game.getMapRegistry();
+		cmdParser = new CommandParser(args, (TextChannel) channel);
+	}
+
 	private RPMap getTargetMap(String[] args, int index) {
 		RPMap map = mapRegistry.getActiveMap();
 		String errorExtension = "";
-		if (args.length > index && !RPBot.isEmptyString(args[index])) {
+		if (args.length > index && !Util.isEmptyString(args[index])) {
 			map = mapRegistry.getMap(args[index]);
 			errorExtension = " with the name **" + args[index] + "**";
 		}
@@ -81,7 +80,7 @@ public class MapCommandHandler {
 
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
-				+ "[map\\_name]: The map to show. Defaults to active map.");
+				+ "[map_name]: The map to show. Defaults to active map.");
 		if (!cmdParser.validateParameterLength(new String[] {"show"}, new String[] {"map_name", "test_case"})) {
 			return;
 		}

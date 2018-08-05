@@ -1,6 +1,6 @@
 package com.rlee.discordbots.rpbot.regitstry;
 
-import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.map.RPMap;
 
@@ -38,7 +38,7 @@ public class MapRegistry implements Registry {
 		if (rpMap == null) {
 			throw new IllegalArgumentException("RPMap must not be null.");
 		}
-		if (RPBot.isEmptyString(rpMap.getName())) {
+		if (Util.isEmptyString(rpMap.getName())) {
 			throw new IllegalArgumentException("RPMap must have a name.");
 		}
 

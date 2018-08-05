@@ -1,10 +1,9 @@
 package com.rlee.discordbots.rpbot.command;
 
 import com.rlee.discordbots.rpbot.MessageListener;
-import com.rlee.discordbots.rpbot.RPBot;
 
+import com.rlee.discordbots.rpbot.Util;
 import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.awt.*;
@@ -48,8 +47,8 @@ public class CommandParser {
 	 * @param errorMessage
 	 */
 	public void sendUsageError(String errorMessage) {
-		String errMsg = RPBot.isEmptyString(errorMessage) ? "" : errorMessage;
-		String errDesc = RPBot.isEmptyString(errorDescription) ? "" : errorDescription;
+		String errMsg = Util.isEmptyString(errorMessage) ? "" : errorMessage;
+		String errDesc = Util.isEmptyString(errorDescription) ? "" : errorDescription;
 
 		String[] authorDescription = {
 				"the wise",
@@ -120,7 +119,7 @@ public class CommandParser {
 	 * @return the parameter after formatting
 	 */
 	private String formatParameter(String parameter, char openBrace, char closeBrace) {
-		if (RPBot.isEmptyString(parameter)) {
+		if (Util.isEmptyString(parameter)) {
 			return "";
 		}
 		

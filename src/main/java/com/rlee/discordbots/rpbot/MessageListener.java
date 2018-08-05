@@ -4,10 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.rlee.discordbots.rpbot.command.CommandParser;
-import com.rlee.discordbots.rpbot.command.MapCommandHandler;
+import com.rlee.discordbots.rpbot.map.MapCommandHandler;
 import com.rlee.discordbots.rpbot.dice.RollCalculator;
 import com.rlee.discordbots.rpbot.game.RPGame;
-import com.rlee.discordbots.rpbot.map.RPMap;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
@@ -92,7 +91,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		String[] args = content.split(" ");
 		
-		if (args.length < 1 || RPBot.isEmptyString(content)) {
+		if (args.length < 1 || Util.isEmptyString(content)) {
 			return; //Nothing placed after command prefix!
 		}
 		
@@ -145,7 +144,7 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "listchar": {
 			CharProfile profile = null;
-			if (args.length >= 2 && !RPBot.isEmptyString(args[1])) {
+			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
 				 profile = game.getProfileRegistry().getProfile(args[1]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -166,7 +165,7 @@ public class MessageListener extends ListenerAdapter {
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 3 && !RPBot.isEmptyString(args[2])) {
+			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
 				 profile = game.getProfileRegistry().getProfile(args[2]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -234,7 +233,7 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "save": case "savechar": {
 			CharProfile profile = null;
-			if (args.length >= 2 && !RPBot.isEmptyString(args[1])) {
+			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
 				profile = game.getProfileRegistry().getProfile(args[1]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -270,7 +269,7 @@ public class MessageListener extends ListenerAdapter {
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 4 && !RPBot.isEmptyString(args[3])) {
+			if (args.length >= 4 && !Util.isEmptyString(args[3])) {
 				 profile = game.getProfileRegistry().getProfile(args[3]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -328,7 +327,7 @@ public class MessageListener extends ListenerAdapter {
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 3 && !RPBot.isEmptyString(args[2])) {
+			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
 				profile = game.getProfileRegistry().getProfile(args[2]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -355,7 +354,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "map": {
-			MapCommandHandler mapCommandHandler = new MapCommandHandler(args, member, game, channel);
+			new MapCommandHandler().handleCommand(args, member, game, channel);
 		}
 		
 		}

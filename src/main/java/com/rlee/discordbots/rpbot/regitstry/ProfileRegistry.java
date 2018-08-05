@@ -3,7 +3,7 @@ package com.rlee.discordbots.rpbot.regitstry;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 
@@ -89,7 +89,7 @@ public class ProfileRegistry implements Registry {
 	 * @author R Lee
 	 */
 	public void addProfile(CharProfile profile) {
-		if (RPBot.isEmptyString(profile.getName()) || containsName(profile.getName().toLowerCase())) {
+		if (Util.isEmptyString(profile.getName()) || containsName(profile.getName().toLowerCase())) {
 			return; // Do not allow null name entry
 					// Do not override existing entry
 		}
