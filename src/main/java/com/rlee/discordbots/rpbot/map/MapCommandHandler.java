@@ -87,8 +87,8 @@ public class MapCommandHandler {
 			return;
 		}
 
+		//FIXME Remove test sample
 		if (mapRegistry.getActiveMap() == null) {
-			//FIXME Remove test sample
 			RPMap rpMap = new RPMap("Test");
 			rpMap.setAt(-1, -2, 'b', "Brontosaurus");
 			rpMap.setAt(2, 3, 'c', "Camel");

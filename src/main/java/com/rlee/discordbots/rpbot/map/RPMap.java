@@ -44,6 +44,14 @@ public class RPMap {
 		this.sourceMessage = sourceMessage;
 	}
 
+	/**
+	 * Set a new entity at the given
+	 * @param rowIndex The row to set the entity at
+	 * @param colIndex The column to set the entity at
+	 * @param c A single char representation of the entity to insert
+	 * @param e The entity to insert in the map
+	 * @param <E> The class of the entity
+	 */
 	public <E> void setAt(int rowIndex, int colIndex, char c, E e) {
 		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, new RPCoordinate(rowIndex, colIndex));
 

@@ -1,5 +1,7 @@
 package com.rlee.discordbots.rpbot.map;
 
+import java.util.Objects;
+
 public class RPCoordinate implements Comparable<RPCoordinate> {
 	private int row, col;	//Row number and column number, using traditional 2D array notation
 
@@ -84,18 +86,28 @@ public class RPCoordinate implements Comparable<RPCoordinate> {
 
 	int compareTo(RPCoordinate o, boolean invertRows) {
 		int inverter = invertRows ? -1 : 1;
-		if (getRow() < o.getRow()) {
+		if (row < o.row) {
 			return -1 * inverter;
-		} else if (getRow() > o.getRow()) {
+		} else if (row > o.row) {
 			return 1 * inverter;
 		}
 
-		if (getCol() < o.getCol()) {
+		if (col < o.col) {
 			return -1;
-		} else if (getCol() > o.getCol()) {
+		} else if (col > o.col) {
 			return 1;
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Get the hashCode as defined by
+	 * Object.hash(getRow(), getCol())
+	 * @return The hashcode
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(row, col);
 	}
 }
