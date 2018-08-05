@@ -34,9 +34,9 @@ public class MapCommandHandler {
 				showMapCmd(args);
 				break;
 			case "move":
-				test(args[2]);
 				break;
 			case "set":
+				setOnMapCmd(args);
 				break;
 			case "legend":
 				break;
@@ -51,19 +51,6 @@ public class MapCommandHandler {
 						+  "\tshow, move, set, legend, list, new, delete");
 				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 				break;
-		}
-	}
-
-	private void test(String arg2) {
-		//FIXME Delete this test function!
-		CoordinateParser cp = new CoordinateParser();
-		try {
-			RPCoordinate coord = cp.parseCoordinates(arg2);
-			channel.sendMessage("Coord received! Row: " + coord.getRow() + ", Col: " + coord.getCol()).queue();
-		} catch (InvalidCoordinateException e) {
-			e.buildFormattedExceptionMessage(arg2);
-			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
-			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 		}
 	}
 
@@ -96,23 +83,25 @@ public class MapCommandHandler {
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
 				+ "[map_name]: The map to show. Defaults to active map.");
-		if (!cmdParser.validateParameterLength(new String[] {"show"}, new String[] {"map_name", "test_case"})) {
+		if (!cmdParser.validateParameterLength(new String[] {"show"}, "map_name")) {
 			return;
 		}
 
-		//FIXME Remove test sample
-		RPMap rpMap = new RPMap("Test");
-		rpMap.setAt(-1, -2, 'b', "Brontosaurus");
-		rpMap.setAt(2, 3, 'c', "Camel");
-		rpMap.setAt(2, 4, 'd', "Dino");
-		rpMap.setAt(1, 5, 'e', "Elephant");
-		rpMap.setAt(1, 6, 'f', "Fish");
-		rpMap.setAt(1, 2, '/', "Wall");
-		rpMap.setAt(7, 4, '\u2588', "Wall");
-		rpMap.setAt(6, 4, '\u2588', "Wall");
-		rpMap.setAt(6, 5, '\u2588', "Wall");
-		mapRegistry.addMap(rpMap);
-		mapRegistry.setActiveMap(rpMap);
+		if (mapRegistry.getActiveMap() == null) {
+			//FIXME Remove test sample
+			RPMap rpMap = new RPMap("Test");
+			rpMap.setAt(-1, -2, 'b', "Brontosaurus");
+			rpMap.setAt(2, 3, 'c', "Camel");
+			rpMap.setAt(2, 4, 'd', "Dino");
+			rpMap.setAt(1, 5, 'e', "Elephant");
+			rpMap.setAt(1, 6, 'f', "Fish");
+			rpMap.setAt(1, 2, '/', "Wall");
+			rpMap.setAt(7, 4, '\u2588', "Wall");
+			rpMap.setAt(6, 4, '\u2588', "Wall");
+			rpMap.setAt(6, 5, '\u2588', "Wall");
+			mapRegistry.addMap(rpMap);
+			mapRegistry.setActiveMap(rpMap);
+		}
 
 		RPMap map = getTargetMap(args, 2);
 		if (map == null) {
@@ -120,5 +109,29 @@ public class MapCommandHandler {
 		}
 
 		channel.sendMessage(map.showMap(0, 0)).queue();
+	}
+
+	private void setOnMapCmd(String args[]) {
+		if (!cmdParser.validateParameterLength(new String[] {"set", "entity", "coordinate"}, "map_name")) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 4);
+		if (map == null) {
+			return;
+		}
+
+		RPCoordinate rc = null;
+		try {
+			rc = new CoordinateParser().parseCoordinates(args[3]);
+		} catch (InvalidCoordinateException e) {
+			e.buildFormattedExceptionMessage(args[3]);
+			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
+			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+		}
+
+		//TODO Parse out the "character" input
+		map.setAt(rc.getRow(), rc.getCol(), args[2].charAt(0), args[2]);
+
 	}
 }
