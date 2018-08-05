@@ -13,7 +13,7 @@ class RPMapPrinter {
 	private static final char cornerDividerChar = '+';
 	private static final char blankChar = ' ';
 
-	private static final int ALPHA_ZERO_INDEX = -999;
+	private static final int BLANK_DIGIT = -999;
 
 	private int maxCharWidth = 3;
 	private int maxCharHeight = 1;
@@ -226,20 +226,20 @@ class RPMapPrinter {
 		int i = 0;
 
 		//Edge case: Explicitly search for index == 0 for efficiency
-		if (index == 0) {
-			while (i < digits.length - 1) {
-				sb.append(' ');
-				i++;
-			}
-			return sb.append('0').toString();
-		}
+//		if (index == 0) {
+//			while (i < digits.length - 1) {
+//				sb.append(' ');
+//				i++;
+//			}
+//			return sb.append('0').toString();
+//		}
 
-		while (digits[i] == 0) {
-			sb.append(' ');
+		while (digits[i] == BLANK_DIGIT) {
+			sb.append(blankChar);
 			i++;
 		}
 
-		//Edge case: The only -1 instance represents a - char
+		//Test for the only -1 instance represents a - char
 		if (digits[i] < 0) {
 			sb.append('-');
 			i++;
@@ -260,10 +260,10 @@ class RPMapPrinter {
 		for (int i = 0, j = leftCol; i < netColCount; i++, j++) {
 			numericColIndices[i] = getPaddedDigits(j, maxColIndexWidth, RPMap.ALPHA_RADIX);
 
-			//Edge case
-			if (j % RPMap.ALPHA_RADIX == 0) {
-				numericColIndices[i][maxColIndexWidth - 1] = ALPHA_ZERO_INDEX;
-			}
+//			//Edge case
+//			if (j % RPMap.ALPHA_RADIX == 0) {
+//				numericColIndices[i][maxColIndexWidth - 1] = BLANK_DIGIT;
+//			}
 		}
 
 		StringBuilder sb = new StringBuilder();
@@ -299,10 +299,10 @@ class RPMapPrinter {
 			blankCharCount++;
 		}
 
-		if (indexDigit == ALPHA_ZERO_INDEX) {
-			sb.append(RPMap.ALPHA_ZERO_CHAR);
-		} else if (indexDigit == 0) {
+		if (indexDigit == BLANK_DIGIT) {
 			sb.append(blankChar);
+		} else if (indexDigit == 0) {
+			sb.append(RPMap.ALPHA_ZERO_CHAR);
 		} else if (indexDigit < 0) {
 			sb.append('-'); //Negative sign symbol
 		} else {
@@ -328,7 +328,7 @@ class RPMapPrinter {
 		int[] paddedDigits = new int[maxIndexWidth];
 		int i = 0;
 		while (i < maxIndexWidth - indexDigits.length) {
-			paddedDigits[i] = 0;
+			paddedDigits[i] = BLANK_DIGIT;
 			i++;
 		}
 
@@ -348,6 +348,11 @@ class RPMapPrinter {
 	}
 
 	private int[] getDigits(int n, int radix) {
+		//Edge case:
+		if (n == 0) {
+			return new int[] {0}; //Return an array with just the number 0 in it
+		}
+
 		int digitCount = 0;
 		int i = Math.abs(n);
 		while (i > 0) {
