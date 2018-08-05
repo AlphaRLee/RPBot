@@ -71,7 +71,7 @@ class RPMapPrinter {
 
 		int minRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
 		maxRowIndexWidth = Math.max(getDigits(bottomRow).length, getDigits(bottomRow + minRowCount).length);
-		maxColIndexWidth = Math.max(getDigits(leftCol, RPMap.ALPHA_RADIX).length, getDigits(leftCol + minRowCount, RPMap.ALPHA_RADIX).length);
+		maxColIndexWidth = Math.max(getDigits(leftCol, RPMap.COL_RADIX).length, getDigits(leftCol + minRowCount, RPMap.COL_RADIX).length);
 		StringBuilder blankRowIndexBuilder = new StringBuilder();
 		for (int i = 0; i < maxRowIndexWidth; i++) {
 			blankRowIndexBuilder.append(' ');
@@ -258,10 +258,10 @@ class RPMapPrinter {
 		int[][] numericColIndices = new int[netColCount][maxColIndexWidth];
 
 		for (int i = 0, j = leftCol; i < netColCount; i++, j++) {
-			numericColIndices[i] = getPaddedDigits(j, maxColIndexWidth, RPMap.ALPHA_RADIX);
+			numericColIndices[i] = getPaddedDigits(j, maxColIndexWidth, RPMap.COL_RADIX);
 
 //			//Edge case
-//			if (j % RPMap.ALPHA_RADIX == 0) {
+//			if (j % RPMap.COL_RADIX == 0) {
 //				numericColIndices[i][maxColIndexWidth - 1] = BLANK_DIGIT;
 //			}
 		}
@@ -318,7 +318,7 @@ class RPMapPrinter {
 	}
 
 	private int[] getPaddedDigits(int index, int maxIndexWidth) {
-		return getPaddedDigits(index, maxIndexWidth, 10);
+		return getPaddedDigits(index, maxIndexWidth, RPMap.ROW_RADIX);
 	}
 
 	private int[] getPaddedDigits(int index, int maxIndexWidth, int radix) {
@@ -344,7 +344,7 @@ class RPMapPrinter {
 	}
 
 	private int[] getDigits(int n) {
-		return getDigits(n, 10);
+		return getDigits(n, RPMap.ROW_RADIX);
 	}
 
 	private int[] getDigits(int n, int radix) {

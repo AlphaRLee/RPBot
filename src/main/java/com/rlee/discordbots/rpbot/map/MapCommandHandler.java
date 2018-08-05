@@ -3,6 +3,7 @@ package com.rlee.discordbots.rpbot.map;
 import com.rlee.discordbots.rpbot.MessageListener;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.command.CommandParser;
+import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.regitstry.MapRegistry;
 import net.dv8tion.jda.core.entities.Member;
@@ -33,6 +34,7 @@ public class MapCommandHandler {
 				showMapCmd(args);
 				break;
 			case "move":
+				test(args[2]);
 				break;
 			case "set":
 				break;
@@ -49,6 +51,19 @@ public class MapCommandHandler {
 						+  "\tshow, move, set, legend, list, new, delete");
 				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 				break;
+		}
+	}
+
+	private void test(String arg2) {
+		//FIXME Delete this test function!
+		CoordinateParser cp = new CoordinateParser();
+		try {
+			RPCoordinate coord = cp.parseCoordinates(arg2);
+			channel.sendMessage("Coord received! Row: " + coord.getRow() + ", Col: " + coord.getCol()).queue();
+		} catch (InvalidCoordinateException e) {
+			e.buildFormattedExceptionMessage(arg2);
+			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
+			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 		}
 	}
 

@@ -62,7 +62,7 @@ public class CommandParser {
 
 		EmbedBuilder msgBuilder = new EmbedBuilder();
 		msgBuilder.setColor(Color.RED);
-		msgBuilder.setAuthor("RP Bot - " + authorDescription[new Random().nextInt(authorDescription.length)]);
+		msgBuilder.setFooter("RP Bot - " + authorDescription[new Random().nextInt(authorDescription.length)], null);
 		msgBuilder.setTitle(errMsg, null);
 		msgBuilder.setDescription(errDesc);
 		channel.sendMessage(msgBuilder.build()).queue();
