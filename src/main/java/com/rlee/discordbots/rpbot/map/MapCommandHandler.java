@@ -99,6 +99,12 @@ public class MapCommandHandler {
 			rpMap.setAt(7, 4, '\u2588', "Wall");
 			rpMap.setAt(6, 4, '\u2588', "Wall");
 			rpMap.setAt(6, 5, '\u2588', "Wall");
+
+			rpMap.setAt(0, 0, 'z', "Zebra");
+			rpMap.setAt(0, 7, 'y', "Yak");
+			rpMap.setAt(7, 0, 'x', "Xerus");
+			rpMap.setAt(7, 1, 'w', "Walrus");
+			rpMap.setAt(7, 7, 'u', "Unicorn");
 			mapRegistry.addMap(rpMap);
 			mapRegistry.setActiveMap(rpMap);
 		}

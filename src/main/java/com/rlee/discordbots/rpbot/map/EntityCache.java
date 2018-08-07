@@ -8,7 +8,11 @@ import java.util.*;
  * A utility to cache information from an RPMap about the entities stored within
  */
 class EntityCache {
-	private ArrayList<RPMapEntity<?>> cachedEntities;
+	@Deprecated
+	private ArrayList<RPMapEntity<?>> cachedEntities; //TODO Delete deprecated: cachedEntities is being replaced by a cached Treemap
+
+	private NavigableMap<RPCoordinate, RPMapEntity<?>> cachedEntitiesByCoordinate;
+
 	private RPCoordinate bottomLeftCorner, topRightCorner; //Corners of the cached region, inclusive
 
 	private boolean hasBeenBuilt;
@@ -56,6 +60,8 @@ class EntityCache {
 	 * For minor cache changes, consider using {@link EntityCache#updateCache()}
 	 * @param entities The list of entities to build the cache from
 	 */
+	//TODO Delete deprecated method
+	@Deprecated
 	void buildCache(LinkedList<RPMapEntity<?>> entities) {
 		cachedEntities = new ArrayList<>();
 		for (RPMapEntity<?> entity : entities) {
@@ -64,6 +70,12 @@ class EntityCache {
 			}
 		}
 
+		hasBeenBuilt = true;
+	}
+
+	void buildCache(TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate) {
+		//Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
+		cachedEntitiesByCoordinate = entitiesByCoordinate.tailMap(topRightCorner, true).headMap(bottomLeftCorner, true);
 		hasBeenBuilt = true;
 	}
 

@@ -16,8 +16,11 @@ public class RPMap {
 
 	private String name;
 
-	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map
-	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all unique entities that are generated
+	@Deprecated
+	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map //TODO Remove deprecated instance
+
+	private TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate;
+	private Map<Character, RPMapEntity<?>> entityLookupByChar; //Lookup for all unique entities that are generated
 
 	private EntityCache entityCache;
 	private boolean isCacheUpToDate;
@@ -27,8 +30,9 @@ public class RPMap {
 	
 	public RPMap(String name) {
 		this.name = name;
-		entities = new LinkedList<>();
-		entityLookup = new LinkedHashMap<>();
+		entities = new LinkedList<>(); //TODO Delete deprecated
+		entitiesByCoordinate = new TreeMap<>();
+		entityLookupByChar = new LinkedHashMap<>();
 
 		entityCache = new EntityCache();
 		isCacheUpToDate = false;
@@ -53,9 +57,14 @@ public class RPMap {
 	 * @param <E> The class of the entity
 	 */
 	public <E> void setAt(int rowIndex, int colIndex, char c, E e) {
-		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, new RPCoordinate(rowIndex, colIndex));
+		setAt(new RPCoordinate(rowIndex, colIndex), c, e);
+	}
 
-		entities.add(entity);
+	public <E> void setAt(RPCoordinate coordinate, char c, E e) {
+		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, coordinate);
+
+		entities.add(entity); //TODO Delete deprecated
+		entitiesByCoordinate.put(coordinate, entity);
 		checkAndModifyLookup(entity);
 	}
 
@@ -67,11 +76,11 @@ public class RPMap {
 	 */
 	private void checkAndModifyLookup(RPMapEntity<?> entity) {
 		char symbol = entity.getSymbol();
-		if (entityLookup.containsKey(symbol)) {
+		if (entityLookupByChar.containsKey(symbol)) {
 			//TODO Decide on implementation. Present implementation: Remove all non-unique entries from lookup
-//			entityLookup.remove(symbol);
+//			entityLookupByChar.remove(symbol);
 		} else {
-			entityLookup.put(symbol, entity);
+			entityLookupByChar.put(symbol, entity);
 		}
 	}
 
@@ -88,10 +97,18 @@ public class RPMap {
 	}
 
 	public String showMap(int bottomRow, int leftCol, int rowCount, int colCount) {
-		checkBuildCache(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
-		return mapPrinter.showMap(bottomRow, leftCol, rowCount, colCount, entityCache.getCachedEntities());
+//		checkBuildCache(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
+//		return mapPrinter.showMap(bottomRow, leftCol, rowCount, colCount, entityCache.getCachedEntities());
+
+		return showMap(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
 	}
 
+	public String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
+		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, entitiesByCoordinate));
+	}
+
+	//TODO Delete unused
+	@Deprecated
 	private void checkBuildCache(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
 		RPCoordinate topRightCorner = calculateTopRightCorner(bottomLeftCorner, rowCount, colCount);
 

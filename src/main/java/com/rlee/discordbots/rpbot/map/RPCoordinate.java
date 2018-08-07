@@ -81,7 +81,7 @@ public class RPCoordinate implements Comparable<RPCoordinate> {
 	 */
 	@Override
 	public int compareTo(RPCoordinate o) {
-		return compareTo(o, false);
+		return compareTo(o, true);
 	}
 
 	int compareTo(RPCoordinate o, boolean invertRows) {

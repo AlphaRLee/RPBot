@@ -1,11 +1,15 @@
 package com.rlee.discordbots.rpbot.map;
 
-import java.util.ArrayList;
-import java.util.ListIterator;
+import java.util.*;
 
 class RPMapPrinter {
-	private ListIterator<RPMapEntity<?>> iterator;
-	private RPMapEntity<?> nextEntity;
+	@Deprecated
+	private ListIterator<RPMapEntity<?>> cachedEntitiesIterator; //TODO Delete deprecated. Phased out by the printableEntityIterator
+	@Deprecated
+	private RPMapEntity<?> nextEntity; //TODO Delete deprecated. Phased out by nextPrintableEntity
+
+	private Iterator<Map.Entry<RPCoordinate, RPMapEntity<?>>> printableEntityIterator;
+	private Map.Entry<RPCoordinate, RPMapEntity<?>> nextPrintableEntity;
 
 	private boolean showBorder = true;
 	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
@@ -59,34 +63,26 @@ class RPMapPrinter {
 	 * Get the entity map as a string starting with the given coordinates for the bottom-left corner
 	 * @param leftCol
 	 * @param bottomRow
+	 * @deprecated More effective variation uses NavigableMap to contain entities
 	 */
+	@Deprecated
 	String showMap(int bottomRow, int leftCol, int rowCount, int colCount, ArrayList<RPMapEntity<?>> sortedCachedEntities) {
-		iterator = sortedCachedEntities.listIterator();
-		if (iterator.hasNext()) {
-			nextEntity = iterator.next();
+		cachedEntitiesIterator = sortedCachedEntities.listIterator();
+		if (cachedEntitiesIterator.hasNext()) {
+			nextEntity = cachedEntitiesIterator.next();
 		}
 
 		this.rowCount = rowCount;
 		this.colCount = colCount;
 
-		int minRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
-		maxRowIndexWidth = Math.max(getDigits(bottomRow).length, getDigits(bottomRow + minRowCount).length);
-		maxColIndexWidth = Math.max(getDigits(leftCol, RPMap.COL_RADIX).length, getDigits(leftCol + minRowCount, RPMap.COL_RADIX).length);
-		StringBuilder blankRowIndexBuilder = new StringBuilder();
-		for (int i = 0; i < maxRowIndexWidth; i++) {
-			blankRowIndexBuilder.append(' ');
-		}
-		blankRowIndex = blankRowIndexBuilder.toString();
+		int netRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
+
+		setupIndexWidths(bottomRow, leftCol, netRowCount);
+		buildStaticRows();
 
 		StringBuilder sb = new StringBuilder("```\n");
-
-		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
-		if (rowDivider == null) {
-			rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
-		}
-
 		//NOTE Reverse iteration used to flip Y axis
-		for (int i = bottomRow + minRowCount - 1; i >= bottomRow; i--) {
+		for (int i = bottomRow + netRowCount - 1; i >= bottomRow; i--) {
 			if (showBorder) {
 				sb.append(rowDivider).append("\n");
 			}
@@ -97,6 +93,86 @@ class RPMapPrinter {
 		sb.append(rowDivider).append("\n");
 		sb.append(showColIndex(leftCol));
 		return sb.append("```").toString();
+	}
+
+	/**
+	 * Build the printable entities map and establish the iterator for it.
+	 * @param bottomLeftCorner
+	 * @param rowCount
+	 * @param colCount
+	 * @param entitiesByCoordinate
+	 * @return
+	 */
+	NavigableMap<RPCoordinate, RPMapEntity<?>> buildPrintableEntities(RPCoordinate bottomLeftCorner,
+	                                                                  int rowCount, int colCount,
+	                                                                  TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate) {
+//		RPCoordinate topRightCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
+		RPCoordinate topLeftCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol());
+		RPCoordinate bottomRightCorner = new RPCoordinate(bottomLeftCorner.getRow(), bottomLeftCorner.getCol() + colCount - 1);
+		//Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
+		NavigableMap<RPCoordinate, RPMapEntity<?>> printableEntities = entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true);
+
+		printableEntityIterator = printableEntities.entrySet().iterator();
+		if (printableEntityIterator.hasNext()) {
+			nextPrintableEntity = printableEntityIterator.next();
+		}
+
+		return printableEntities;
+	}
+
+	/**
+	 * Get the entity map as a string starting with the given coordinates for the bottom-left corner
+	 * @param bottomLeftCorner The bottom left corner of the map to print
+	 * @param rowCount The number of rows to print
+	 * @param colCount The number of columns to print
+	 * @param printableEntities The entities to be printed out
+	 */
+	String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount, NavigableMap<RPCoordinate, RPMapEntity<?>> printableEntities) {
+		int bottomRow = bottomLeftCorner.getRow();
+		int leftCol = bottomLeftCorner.getCol();
+
+		this.rowCount = rowCount;
+		this.colCount = colCount;
+
+		int netRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
+
+		setupIndexWidths(bottomRow, leftCol, netRowCount);
+		buildStaticRows();
+
+		StringBuilder sb = new StringBuilder("```\n");
+		//NOTE Reverse iteration used to flip Y axis
+		for (int i = bottomRow + netRowCount - 1; i >= bottomRow; i--) {
+			if (showBorder) {
+				sb.append(rowDivider).append("\n");
+			}
+
+			sb.append(showRow(i, leftCol));
+		}
+
+		sb.append(rowDivider).append("\n");
+		sb.append(showColIndex(leftCol));
+		return sb.append("```").toString();
+	}
+
+
+	private void setupIndexWidths(int bottomRow, int leftCol, int netRowCount) {
+		maxRowIndexWidth = Math.max(getDigits(bottomRow).length, getDigits(bottomRow + netRowCount).length);
+		maxColIndexWidth = Math.max(getDigits(leftCol, RPMap.COL_RADIX).length, getDigits(leftCol + netRowCount, RPMap.COL_RADIX).length);
+		StringBuilder blankRowIndexBuilder = new StringBuilder();
+		for (int i = 0; i < maxRowIndexWidth; i++) {
+			blankRowIndexBuilder.append(' ');
+		}
+		blankRowIndex = blankRowIndexBuilder.toString();
+	}
+
+	/**
+	 * Build the two static rows, blankInnerRow and rowDivider, for repeated use
+	 */
+	private void buildStaticRows() {
+		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
+		if (rowDivider == null) {
+			rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
+		}
 	}
 
 	/**
@@ -147,7 +223,7 @@ class RPMapPrinter {
 	}
 
 	private String showEntityCell(RPCoordinate coord) {
-		if (nextEntity == null || !nextEntity.getCoordinate().equals(coord)) {
+		if (nextPrintableEntity == null || !nextPrintableEntity.getKey().equals(coord)) {
 			return showBlankEntityCell();
 		}
 
@@ -166,7 +242,7 @@ class RPMapPrinter {
 			blankCharCount++;
 		}
 
-		sb.append(nextEntity.getSymbol());
+		sb.append(nextPrintableEntity.getValue().getSymbol());
 
 		//Right padding
 		for (int i = 0; i < blankCharCount; i++) {
@@ -174,10 +250,10 @@ class RPMapPrinter {
 		}
 
 		//Assign next entity
-		if (iterator.hasNext()) {
-			nextEntity = iterator.next();
+		if (printableEntityIterator.hasNext()) {
+			nextPrintableEntity = printableEntityIterator.next();
 		} else {
-			nextEntity = null;
+			nextPrintableEntity = null;
 		}
 
 		return sb.toString();
