@@ -3,11 +3,6 @@ package com.rlee.discordbots.rpbot.map;
 import java.util.*;
 
 class RPMapPrinter {
-	@Deprecated
-	private ListIterator<RPMapEntity<?>> cachedEntitiesIterator; //TODO Delete deprecated. Phased out by the printableEntityIterator
-	@Deprecated
-	private RPMapEntity<?> nextEntity; //TODO Delete deprecated. Phased out by nextPrintableEntity
-
 	private Iterator<Map.Entry<RPCoordinate, RPMapEntity<?>>> printableEntityIterator;
 	private Map.Entry<RPCoordinate, RPMapEntity<?>> nextPrintableEntity;
 
@@ -57,42 +52,6 @@ class RPMapPrinter {
 
 	void setColCount(int colCount) {
 		this.colCount = colCount;
-	}
-
-	/**
-	 * Get the entity map as a string starting with the given coordinates for the bottom-left corner
-	 * @param leftCol
-	 * @param bottomRow
-	 * @deprecated More effective variation uses NavigableMap to contain entities
-	 */
-	@Deprecated
-	String showMap(int bottomRow, int leftCol, int rowCount, int colCount, ArrayList<RPMapEntity<?>> sortedCachedEntities) {
-		cachedEntitiesIterator = sortedCachedEntities.listIterator();
-		if (cachedEntitiesIterator.hasNext()) {
-			nextEntity = cachedEntitiesIterator.next();
-		}
-
-		this.rowCount = rowCount;
-		this.colCount = colCount;
-
-		int netRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
-
-		setupIndexWidths(bottomRow, leftCol, netRowCount);
-		buildStaticRows();
-
-		StringBuilder sb = new StringBuilder("```\n");
-		//NOTE Reverse iteration used to flip Y axis
-		for (int i = bottomRow + netRowCount - 1; i >= bottomRow; i--) {
-			if (showBorder) {
-				sb.append(rowDivider).append("\n");
-			}
-
-			sb.append(showRow(i, leftCol));
-		}
-
-		sb.append(rowDivider).append("\n");
-		sb.append(showColIndex(leftCol));
-		return sb.append("```").toString();
 	}
 
 	/**
@@ -398,7 +357,6 @@ class RPMapPrinter {
 	}
 
 	private int[] getPaddedDigits(int index, int maxIndexWidth, int radix) {
-		//TODO Implement support for negative indices
 		int[] indexDigits = getDigits(index, radix);
 
 		int[] paddedDigits = new int[maxIndexWidth];

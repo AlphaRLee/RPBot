@@ -16,26 +16,16 @@ public class RPMap {
 
 	private String name;
 
-	@Deprecated
-	private LinkedList<RPMapEntity<?>> entities; //List of all entities in this map //TODO Remove deprecated instance
-
 	private TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate;
 	private Map<Character, RPMapEntity<?>> entityLookupByChar; //Lookup for all unique entities that are generated
-
-	private EntityCache entityCache;
-	private boolean isCacheUpToDate;
 
 	private RPMapPrinter mapPrinter;
 	private Message sourceMessage;
 	
 	public RPMap(String name) {
 		this.name = name;
-		entities = new LinkedList<>(); //TODO Delete deprecated
 		entitiesByCoordinate = new TreeMap<>();
 		entityLookupByChar = new LinkedHashMap<>();
-
-		entityCache = new EntityCache();
-		isCacheUpToDate = false;
 
 		mapPrinter = new RPMapPrinter();
 	}
@@ -63,7 +53,6 @@ public class RPMap {
 	public <E> void setAt(RPCoordinate coordinate, char c, E e) {
 		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, coordinate);
 
-		entities.add(entity); //TODO Delete deprecated
 		entitiesByCoordinate.put(coordinate, entity);
 		checkAndModifyLookup(entity);
 	}
@@ -105,40 +94,6 @@ public class RPMap {
 
 	public String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
 		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, entitiesByCoordinate));
-	}
-
-	//TODO Delete unused
-	@Deprecated
-	private void checkBuildCache(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
-		RPCoordinate topRightCorner = calculateTopRightCorner(bottomLeftCorner, rowCount, colCount);
-
-		//TODO Add more sophisticated checks for whether or not cache needs to be rebuilt or just updated
-		if (!checkCacheUpToDate(bottomLeftCorner, topRightCorner)) {
-			entityCache.setBottomLeftCorner(bottomLeftCorner);
-			entityCache.setTopRightCorner(topRightCorner);
-
-			entityCache.buildCache(entities);
-			entityCache.sortCachedEntitiesByCoordinates(true);
-		}
-	}
-
-	private boolean checkCacheUpToDate(RPCoordinate bottomLeftCorner, RPCoordinate topRightCorner) {
-		if (!isCacheUpToDate) {
-			return isCacheUpToDate;
-		}
-
-		isCacheUpToDate = false;
-		if (!entityCache.getBottomLeftCorner().equals(bottomLeftCorner)) {
-			return isCacheUpToDate;
-		}
-
-		if (!entityCache.getTopRightCorner().equals(topRightCorner)) {
-			return isCacheUpToDate;
-		}
-
-		isCacheUpToDate = true;
-		return isCacheUpToDate;
-
 	}
 
 	/**
