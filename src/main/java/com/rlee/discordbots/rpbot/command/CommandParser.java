@@ -84,6 +84,13 @@ public class CommandParser {
 		if (args.length > requiredParameters.length) {
 			//More args than parameters (i.e. correct number of parameters following command name)
 			result = true; //Happy path
+
+			for (String arg : requiredParameters) {
+				if (Util.isEmptyString(arg)) {
+					result = false; //Whoops, unhappy path found again
+					break;
+				}
+			}
 		}
 
 		lastUsageMessage = buildUsageErrorMessage(requiredParameters, optionalParameters);

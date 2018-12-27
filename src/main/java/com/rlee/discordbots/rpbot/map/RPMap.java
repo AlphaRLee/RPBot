@@ -1,7 +1,5 @@
 package com.rlee.discordbots.rpbot.map;
 
-import java.util.*;
-
 import net.dv8tion.jda.core.entities.Message;
 
 /**
@@ -16,17 +14,14 @@ public class RPMap {
 
 	private String name;
 
-	private TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate;
-	private Map<Character, RPMapEntity<?>> entityLookupByChar; //Lookup for all unique entities that are generated
-
+	private MapEntityRegistry mapEntityRegistry;
 	private RPMapPrinter mapPrinter;
 	private Message sourceMessage;
 	
 	public RPMap(String name) {
 		this.name = name;
-		entitiesByCoordinate = new TreeMap<>();
-		entityLookupByChar = new LinkedHashMap<>();
 
+		mapEntityRegistry = new MapEntityRegistry();
 		mapPrinter = new RPMapPrinter();
 	}
 
@@ -38,39 +33,37 @@ public class RPMap {
 		this.sourceMessage = sourceMessage;
 	}
 
+	public Object getEntity(int row, int col) {
+		return mapEntityRegistry.getEntity(new RPCoordinate(row, col));
+	}
+
+	public Object getEntity(RPCoordinate coordinate) {
+		return mapEntityRegistry.getEntity(coordinate);
+	}
+
 	/**
-	 * Set a new entity at the given
+	 * Get the unique entity represented by the given character
+	 * @param c The character representation of the entity
+	 * @return The entity, or null if zero or more than 1 instance found.
+	 */
+	public Object getEntity(Character c) {
+		return mapEntityRegistry.getEntity(c);
+	}
+
+	/**
+	 * Set a new entity at the given coordinates. Will overwrite any existing entity at the coordinates
 	 * @param rowIndex The row to set the entity at
 	 * @param colIndex The column to set the entity at
-	 * @param c A single char representation of the entity to insert
-	 * @param e The entity to insert in the map
+	 * @param symbol A single char representation of the entity to insert
+	 * @param entity The entity to insert in the map
 	 * @param <E> The class of the entity
 	 */
-	public <E> void setAt(int rowIndex, int colIndex, char c, E e) {
-		setAt(new RPCoordinate(rowIndex, colIndex), c, e);
+	public <E> void setEntity(int rowIndex, int colIndex, char symbol, E entity) {
+		mapEntityRegistry.setEntity(new RPCoordinate(rowIndex, colIndex), symbol, entity);
 	}
 
-	public <E> void setAt(RPCoordinate coordinate, char c, E e) {
-		RPMapEntity<E> entity = new RPMapEntity<E>(c, e, coordinate);
-
-		entitiesByCoordinate.put(coordinate, entity);
-		checkAndModifyLookup(entity);
-	}
-
-	/**
-	 * Check the EntityLookup and modify it based on the given entity.
-	 * If the given entity's symbol is already listed, then delete the entry from the lookup.
-	 * If the entity is not listed, then add the entry to the lookup.
-	 * @param entity
-	 */
-	private void checkAndModifyLookup(RPMapEntity<?> entity) {
-		char symbol = entity.getSymbol();
-		if (entityLookupByChar.containsKey(symbol)) {
-			//TODO Decide on implementation. Present implementation: Remove all non-unique entries from lookup
-//			entityLookupByChar.remove(symbol);
-		} else {
-			entityLookupByChar.put(symbol, entity);
-		}
+	public <E> void setEntity(RPCoordinate coordinate, char symbol, E entity) {
+		mapEntityRegistry.setEntity(coordinate, symbol, entity);
 	}
 
 	/**
@@ -86,14 +79,11 @@ public class RPMap {
 	}
 
 	public String showMap(int bottomRow, int leftCol, int rowCount, int colCount) {
-//		checkBuildCache(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
-//		return mapPrinter.showMap(bottomRow, leftCol, rowCount, colCount, entityCache.getCachedEntities());
-
 		return showMap(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
 	}
 
 	public String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
-		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, entitiesByCoordinate));
+		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, mapEntityRegistry.getEntitiesByCoordinate()));
 	}
 
 	/**

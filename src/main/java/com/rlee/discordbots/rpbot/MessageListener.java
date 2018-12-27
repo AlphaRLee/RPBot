@@ -347,16 +347,16 @@ public class MessageListener extends ListenerAdapter {
 			profile.removeAttribute(attribute);
 			channel.sendMessage("The attribute **" + attribute.getName() + "** has been removed from **" + profile.getName() + "**.").queue();
 			break;
-		}	
+		}
+		case "map": case "m": {
+			new MapCommandHandler().handleCommand(args, member, game, channel);
+			break;
+		}
 		//TODO Delete these test cases
 		case "guildid": {
 			channel.sendMessage("The guild ID is: " + game.getGuild().getId()).queue();
 			break;
 		}
-		case "map": {
-			new MapCommandHandler().handleCommand(args, member, game, channel);
-		}
-		
 		}
 		
 		//Cases for "+" and "-" commands:
@@ -590,7 +590,8 @@ public class MessageListener extends ListenerAdapter {
 	 * @return
 	 *
 	 * @author R Lee
-	 * 
+	 *
+	 * TODO Delete method
 	 * @deprecated Convention: All args should be passed, including command arg - RLee 16/06/2018
 	 */
 	@Deprecated

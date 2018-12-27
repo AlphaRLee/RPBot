@@ -11,6 +11,7 @@ import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 public class MapCommandHandler {
+
 	private RPGame game;
 	private Member sender;
 	private MessageChannel channel;
@@ -80,6 +81,34 @@ public class MapCommandHandler {
 		return map;
 	}
 
+	private RPCoordinate getTargetCoordinate(String arg) {
+		RPCoordinate rc = null;
+		try {
+			rc = getTargetCoordinate(arg, false);
+		} catch (InvalidCoordinateException e) {
+			//Will never reach here
+		}
+
+		return rc;
+	}
+
+	private RPCoordinate getTargetCoordinate(String arg, boolean throwException) throws InvalidCoordinateException {
+		RPCoordinate rc = null;
+		try {
+			rc = new CoordinateParser().parseCoordinates(arg);
+		} catch (InvalidCoordinateException e) {
+			e.buildFormattedExceptionMessage(arg);
+			if (throwException) {
+				throw e;
+			} else {
+				cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
+				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+			}
+		}
+
+		return rc;
+	}
+
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
 				+ "[map_name]: The map to show. Defaults to active map.");
@@ -90,21 +119,21 @@ public class MapCommandHandler {
 		//FIXME Remove test sample
 		if (mapRegistry.getActiveMap() == null) {
 			RPMap rpMap = new RPMap("Test");
-			rpMap.setAt(-1, -2, 'b', "Brontosaurus");
-			rpMap.setAt(2, 3, 'c', "Camel");
-			rpMap.setAt(2, 4, 'd', "Dino");
-			rpMap.setAt(1, 5, 'e', "Elephant");
-			rpMap.setAt(1, 6, 'f', "Fish");
-			rpMap.setAt(1, 2, '/', "Wall");
-			rpMap.setAt(7, 4, '\u2588', "Wall");
-			rpMap.setAt(6, 4, '\u2588', "Wall");
-			rpMap.setAt(6, 5, '\u2588', "Wall");
+			rpMap.setEntity(-1, -2, 'b', "Brontosaurus");
+			rpMap.setEntity(2, 3, 'c', "Camel");
+			rpMap.setEntity(2, 4, 'd', "Dino");
+			rpMap.setEntity(1, 5, 'e', "Elephant");
+			rpMap.setEntity(1, 6, 'f', "Fish");
+			rpMap.setEntity(1, 2, '/', "Wall");
+			rpMap.setEntity(7, 4, '\u2588', "Wall");
+			rpMap.setEntity(6, 4, '\u2588', "Wall");
+			rpMap.setEntity(6, 5, '\u2588', "Wall");
 
-			rpMap.setAt(0, 0, 'z', "Zebra");
-			rpMap.setAt(0, 7, 'y', "Yak");
-			rpMap.setAt(7, 0, 'x', "Xerus");
-			rpMap.setAt(7, 1, 'w', "Walrus");
-			rpMap.setAt(7, 7, 'u', "Unicorn");
+			rpMap.setEntity(0, 0, 'z', "Zebra");
+			rpMap.setEntity(0, 7, 'y', "Yak");
+			rpMap.setEntity(7, 0, 'x', "Xerus");
+			rpMap.setEntity(7, 1, 'w', "Walrus");
+			rpMap.setEntity(7, 7, 'u', "Unicorn");
 			mapRegistry.addMap(rpMap);
 			mapRegistry.setActiveMap(rpMap);
 		}
@@ -127,17 +156,35 @@ public class MapCommandHandler {
 			return;
 		}
 
-		RPCoordinate rc = null;
-		try {
-			rc = new CoordinateParser().parseCoordinates(args[3]);
-		} catch (InvalidCoordinateException e) {
-			e.buildFormattedExceptionMessage(args[3]);
-			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
-			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
-		}
+		RPCoordinate rc = getTargetCoordinate(args[3]);
 
 		//TODO Parse out the "character" input
-		map.setAt(rc.getRow(), rc.getCol(), args[2].charAt(0), args[2]);
+		map.setEntity(rc.getRow(), rc.getCol(), args[2].charAt(0), args[2]);
+
+	}
+
+	private void moveCmd(String args[]) {
+		cmdParser.setErrorDescription("Move an entity on the map to the provided coordinate.\nCan specify character symbol, starting coordinate, or entity.");
+		if (!cmdParser.validateParameterLength(new String[] {"move", "symbol | source_coordinate | entity", "destination_coordinate"}, "map_name")) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 4);
+		if (map == null) {
+			return;
+		}
+
+		RPCoordinate destCoord = getTargetCoordinate(args[3]);
+		if (destCoord == null) {
+			return;
+		}
+
+		MapEntityRegistry.SearchType priorityCast = MapEntityRegistry.SearchType.ENTITY;
+		if (args[2].length() == 1) {
+			priorityCast = MapEntityRegistry.SearchType.SYMBOL;
+		} else if (args[2].length() == 2) {
+			priorityCast = MapEntityRegistry.SearchType.COORDINATE;
+		}
 
 	}
 }
