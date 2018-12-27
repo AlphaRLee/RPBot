@@ -35,6 +35,7 @@ public class MapCommandHandler {
 				showMapCmd(args);
 				break;
 			case "move":
+				moveCmd(args);
 				break;
 			case "set":
 				setOnMapCmd(args);
@@ -81,32 +82,29 @@ public class MapCommandHandler {
 		return map;
 	}
 
-	private RPCoordinate getTargetCoordinate(String arg) {
+	private RPCoordinate parseCoordinates(String arg) {
 		RPCoordinate rc = null;
 		try {
-			rc = getTargetCoordinate(arg, false);
+			rc = RPMap.parseCoordinates(arg);
 		} catch (InvalidCoordinateException e) {
-			//Will never reach here
+			e.buildFormattedExceptionMessage(arg);
+			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
+			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 		}
 
 		return rc;
 	}
 
-	private RPCoordinate getTargetCoordinate(String arg, boolean throwException) throws InvalidCoordinateException {
-		RPCoordinate rc = null;
-		try {
-			rc = new CoordinateParser().parseCoordinates(arg);
-		} catch (InvalidCoordinateException e) {
-			e.buildFormattedExceptionMessage(arg);
-			if (throwException) {
-				throw e;
-			} else {
-				cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
-				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
-			}
+	private RPMapEntity<?> parseMapEntity(RPMap map, String arg) {
+		RPMapEntity<?> mapEntity = map.parseMapEntity(arg);
+
+		if (mapEntity == null) {
+			cmdParser.setErrorDescription("No entity was found at/by the name **" + arg + "** on the map " + map.getName() + ".");
+			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+			return null;
 		}
 
-		return rc;
+		return mapEntity;
 	}
 
 	private void showMapCmd(String[] args) {
@@ -156,11 +154,10 @@ public class MapCommandHandler {
 			return;
 		}
 
-		RPCoordinate rc = getTargetCoordinate(args[3]);
+		RPCoordinate rc = parseCoordinates(args[3]);
 
 		//TODO Parse out the "character" input
-		map.setEntity(rc.getRow(), rc.getCol(), args[2].charAt(0), args[2]);
-
+		map.setEntity(rc, args[2].charAt(0), args[2]);
 	}
 
 	private void moveCmd(String args[]) {
@@ -174,17 +171,18 @@ public class MapCommandHandler {
 			return;
 		}
 
-		RPCoordinate destCoord = getTargetCoordinate(args[3]);
+		RPCoordinate destCoord = parseCoordinates(args[3]);
 		if (destCoord == null) {
 			return;
 		}
 
-		MapEntityRegistry.SearchType priorityCast = MapEntityRegistry.SearchType.ENTITY;
-		if (args[2].length() == 1) {
-			priorityCast = MapEntityRegistry.SearchType.SYMBOL;
-		} else if (args[2].length() == 2) {
-			priorityCast = MapEntityRegistry.SearchType.COORDINATE;
+		RPMapEntity<?> mapEntity = parseMapEntity(map, args[2]);
+		if (mapEntity == null) {
+			return;
 		}
 
+		RPCoordinate oldCoordinate = mapEntity.getCoordinate();
+		map.moveEntityToCoordinate(mapEntity, destCoord);
+		channel.sendMessage("**" + mapEntity.getName() + "** was moved from **" + oldCoordinate + "** to **" + mapEntity.getCoordinate() + "**.").queue();
 	}
 }

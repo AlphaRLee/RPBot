@@ -2,6 +2,7 @@ package com.rlee.discordbots.rpbot.map;
 
 class RPMapEntity <E> {
 	private char symbol;
+	private String name;
 	private E entity;
 
 	private RPCoordinate coordinate;
@@ -10,6 +11,7 @@ class RPMapEntity <E> {
 		this.symbol = symbol;	//TODO Add support for 2D shape instead of single char
 								//TODO Add support for entity larger than 1 cell
 		this.entity = entity;
+		this.name = entity.toString();
 		this.coordinate = coordinate;
 	}
 	
@@ -20,7 +22,11 @@ class RPMapEntity <E> {
 	void setSymbol(char symbol) {
 		this.symbol = symbol;
 	}
-	
+
+	String getName() { return name; }
+
+	void setName(String name) { this.name = name; }
+
 	E getEntity() {
 		return entity;
 	}
@@ -50,6 +56,6 @@ class RPMapEntity <E> {
 			return null;
 		}
 		
-		return symbol + ": " + entity.toString();
+		return symbol + ": " + name;
 	}
 }

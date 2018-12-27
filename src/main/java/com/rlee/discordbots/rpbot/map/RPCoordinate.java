@@ -26,6 +26,11 @@ public class RPCoordinate implements Comparable<RPCoordinate> {
 		this.col = col;
 	}
 
+	@Override
+	public String toString() {
+		return CoordinateParser.rpCoordinateToString(this);
+	}
+
 	/**
 	 * Evaluates whether or not the given object is an instance of RPCoordinate and has the same row and col
 	 * @param obj

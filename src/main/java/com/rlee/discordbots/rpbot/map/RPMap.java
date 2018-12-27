@@ -1,5 +1,6 @@
 package com.rlee.discordbots.rpbot.map;
 
+import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import net.dv8tion.jda.core.entities.Message;
 
 /**
@@ -14,13 +15,16 @@ public class RPMap {
 
 	private String name;
 
+	private static CoordinateParser coordinateParser;
 	private MapEntityRegistry mapEntityRegistry;
 	private RPMapPrinter mapPrinter;
+
 	private Message sourceMessage;
 	
 	public RPMap(String name) {
 		this.name = name;
 
+		coordinateParser = new CoordinateParser();
 		mapEntityRegistry = new MapEntityRegistry();
 		mapPrinter = new RPMapPrinter();
 	}
@@ -95,6 +99,24 @@ public class RPMap {
 	 */
 	private RPCoordinate calculateTopRightCorner(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
 		return new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
+	}
+
+//	void moveEntityToCoordinate(String entityArg, String destCoordinateArg) throws InvalidCoordinateException {
+//		RPCoordinate destCoordinate = parseCoordinates(destCoordinateArg);
+//		RPMapEntity<?> mapEntity = mapEntityRegistry.parseEntity(entityArg);
+//		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
+//	}
+
+	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) {
+		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
+	}
+
+	RPMapEntity<?> parseMapEntity(String mapEntityArg) {
+		return mapEntityRegistry.parseEntity(mapEntityArg);
+	}
+
+	static RPCoordinate parseCoordinates(String coordinateArg) throws InvalidCoordinateException {
+		return coordinateParser.parseCoordinates(coordinateArg);
 	}
 
 	/**

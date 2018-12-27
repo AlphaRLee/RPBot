@@ -145,4 +145,34 @@ class CoordinateParser {
 
 		return col * (isNegative ? -1 : 1);
 	}
+
+	static String rpCoordinateToString(RPCoordinate coord) {
+		StringBuilder sb = new StringBuilder();
+
+		int colNumber = coord.getCol();
+		if (colNumber == 0) {
+			sb.append(RPMap.ALPHA_ZERO_CHAR);
+		} else {
+			if (colNumber < 0) {
+				sb.append('-');
+				colNumber *= -1;
+			}
+
+			int colDigit;
+			String colString = "";
+			while (colNumber > 0) {
+				colDigit = colNumber % RPMap.COL_RADIX;
+				if (colDigit == 0) {
+					colString = RPMap.ALPHA_ZERO_CHAR + colString;
+				} else {
+					colString = (char) ('A' + colNumber - 1) + colString;
+				}
+				colNumber /= RPMap.COL_RADIX;
+			}
+			sb.append(colString);
+		}
+
+		sb.append(coord.getRow());
+		return sb.toString();
+	}
 }
