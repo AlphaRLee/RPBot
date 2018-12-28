@@ -34,10 +34,8 @@ public class MapCommandHandler {
 			case "show":
 				showMapCmd(args);
 				break;
-			case "goto": case "moveto":
-				moveToCmd(args);
-				break;
 			case "move":
+				moveCmd(args);
 				break;
 			case "set":
 				setOnMapCmd(args);
@@ -52,7 +50,7 @@ public class MapCommandHandler {
 				break;
 			case "help": default:
 				cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
-						+  "\tshow, goto, move, set, legend, list, new, delete");
+						+  "\tshow, move, set, legend, list, new, delete");
 				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 				break;
 		}
@@ -77,6 +75,7 @@ public class MapCommandHandler {
 		if (map == null) {
 			cmdParser.setErrorDescription("No map found" + errorExtension + "."
 					+ "\nTry using " + MessageListener.COMMAND_PREFIX + "map list");
+
 			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
 		}
 
@@ -161,7 +160,7 @@ public class MapCommandHandler {
 		map.setEntity(rc, args[2].charAt(0), args[2]);
 	}
 
-	private void moveToCmd(String args[]) {
+	private void moveCmd(String args[]) {
 		cmdParser.setErrorDescription("Move an entity on the map to the provided coordinate.\nCan specify character symbol, starting coordinate, or entity.");
 		if (!cmdParser.validateParameterLength(new String[] {"move", "symbol | source_coordinate | entity", "destination_coordinate"}, "map_name")) {
 			return;
