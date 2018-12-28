@@ -12,6 +12,7 @@ public class RPMap {
 	static final int ROW_RADIX = 10;
 	static final int COL_RADIX = 27; //Column uses Base 27 system: .=0 A=1 B=2 ... y=25 Z=26 A.=27 AA=28
 	static final char ALPHA_ZERO_CHAR = '.'; //Does that look weird? Yes, that looks very weird. Base 27 numbering system!
+	static final char MULTIPLE_ENTITIES_CHAR = '+';
 
 	private String name;
 
@@ -111,7 +112,7 @@ public class RPMap {
 		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
 	}
 
-	RPMapEntity<?> parseMapEntity(String mapEntityArg) {
+	RPMapEntity<?> parseMapEntity(String mapEntityArg) throws AmbiguousSelectionException {
 		return mapEntityRegistry.parseEntity(mapEntityArg);
 	}
 

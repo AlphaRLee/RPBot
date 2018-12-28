@@ -1,5 +1,7 @@
 package com.rlee.discordbots.rpbot;
 
+import java.util.Collection;
+
 public class Util {
 	public static String replaceWhitespaces(String string) {
 		return replaceWhitespaces(string, false);
@@ -18,4 +20,6 @@ public class Util {
 	public static boolean isEmptyString(String string) {
 		return string == null || string.isEmpty();
 	}
+
+	public static boolean isEmptyCollection(Collection<?> collection) {return collection == null || collection.isEmpty(); }
 }

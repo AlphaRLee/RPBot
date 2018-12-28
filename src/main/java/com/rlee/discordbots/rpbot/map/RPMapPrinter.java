@@ -1,10 +1,12 @@
 package com.rlee.discordbots.rpbot.map;
 
+import com.rlee.discordbots.rpbot.Util;
+
 import java.util.*;
 
 class RPMapPrinter {
-	private Iterator<Map.Entry<RPCoordinate, RPMapEntity<?>>> printableEntityIterator;
-	private Map.Entry<RPCoordinate, RPMapEntity<?>> nextPrintableEntity;
+	private Iterator<Map.Entry<RPCoordinate, RPMapEntityList>> printableEntityIterator;
+	private Map.Entry<RPCoordinate, RPMapEntityList> nextPrintableEntityList;
 
 	private boolean showBorder = true;
 	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
@@ -62,18 +64,18 @@ class RPMapPrinter {
 	 * @param entitiesByCoordinate
 	 * @return
 	 */
-	NavigableMap<RPCoordinate, RPMapEntity<?>> buildPrintableEntities(RPCoordinate bottomLeftCorner,
+	NavigableMap<RPCoordinate, RPMapEntityList> buildPrintableEntities(RPCoordinate bottomLeftCorner,
 	                                                                  int rowCount, int colCount,
-	                                                                  TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate) {
+	                                                                  TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate) {
 //		RPCoordinate topRightCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
 		RPCoordinate topLeftCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol());
 		RPCoordinate bottomRightCorner = new RPCoordinate(bottomLeftCorner.getRow(), bottomLeftCorner.getCol() + colCount - 1);
 		//Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
-		NavigableMap<RPCoordinate, RPMapEntity<?>> printableEntities = entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true);
+		NavigableMap<RPCoordinate, RPMapEntityList> printableEntities = entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true);
 
 		printableEntityIterator = printableEntities.entrySet().iterator();
 		if (printableEntityIterator.hasNext()) {
-			nextPrintableEntity = printableEntityIterator.next();
+			nextPrintableEntityList = printableEntityIterator.next();
 		}
 
 		return printableEntities;
@@ -86,7 +88,7 @@ class RPMapPrinter {
 	 * @param colCount The number of columns to print
 	 * @param printableEntities The entities to be printed out
 	 */
-	String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount, NavigableMap<RPCoordinate, RPMapEntity<?>> printableEntities) {
+	String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount, NavigableMap<RPCoordinate, RPMapEntityList> printableEntities) {
 		int bottomRow = bottomLeftCorner.getRow();
 		int leftCol = bottomLeftCorner.getCol();
 
@@ -182,7 +184,8 @@ class RPMapPrinter {
 	}
 
 	private String showEntityCell(RPCoordinate coord) {
-		if (nextPrintableEntity == null || !nextPrintableEntity.getKey().equals(coord)) {
+		if (nextPrintableEntityList == null
+				|| !nextPrintableEntityList.getKey().equals(coord)) {
 			return showBlankEntityCell();
 		}
 
@@ -201,7 +204,20 @@ class RPMapPrinter {
 			blankCharCount++;
 		}
 
-		sb.append(nextPrintableEntity.getValue().getSymbol());
+		RPMapEntityList entityList = nextPrintableEntityList.getValue();
+		if (Util.isEmptyCollection(entityList)) {
+			// For optimization's sake, it's faster to just do the redundant blank print here
+			// This condition occurs when an entity moves off a previously ocupied cell
+			sb.append(blankChar);
+		} else {
+			sb.append(entityList.get(0).getSymbol());
+
+			// Print info suggesting multiple entities have the same coordinate
+			if (entityList.size() > 1 && maxCharWidth >= 2) {
+				sb.append(RPMap.MULTIPLE_ENTITIES_CHAR);
+				blankCharCount--; // One char taken to add the + symbol
+			}
+		}
 
 		//Right padding
 		for (int i = 0; i < blankCharCount; i++) {
@@ -210,9 +226,9 @@ class RPMapPrinter {
 
 		//Assign next entity
 		if (printableEntityIterator.hasNext()) {
-			nextPrintableEntity = printableEntityIterator.next();
+			nextPrintableEntityList = printableEntityIterator.next();
 		} else {
-			nextPrintableEntity = null;
+			nextPrintableEntityList = null;
 		}
 
 		return sb.toString();

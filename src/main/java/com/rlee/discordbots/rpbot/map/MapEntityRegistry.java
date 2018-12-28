@@ -4,10 +4,7 @@ import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import com.rlee.discordbots.rpbot.regitstry.Registry;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 class MapEntityRegistry implements Registry {
 	enum SearchType {
@@ -16,7 +13,7 @@ class MapEntityRegistry implements Registry {
 		ENTITY
 	}
 
-	private TreeMap<RPCoordinate, RPMapEntity<?>> entitiesByCoordinate;
+	private TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate;
 	private Map<Character, RPMapEntity<?>> entitiesBySymbol; //Lookup for all unique entities that are generated
 	private Map<String, RPMapEntity<?>> entitiesByName; // Entities by full name
 
@@ -32,8 +29,27 @@ class MapEntityRegistry implements Registry {
 		return false;
 	}
 
+	/**
+	 * Get the first entity listed at the given coordinate
+	 * @param coordinate The coordinate to get the entity at
+	 * @return The first entity, or null if no entity exists at the coordinate
+	 */
 	Object getEntity(RPCoordinate coordinate) {
-		return entitiesByCoordinate.get(coordinate).getEntity();
+		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
+		if (Util.isEmptyCollection(entityList)) {
+			return null;
+		}
+
+		return entityList.get(0).getEntity();
+	}
+
+	/**
+	 * Get the list of entities at the given coordinate
+	 * @param coordinate
+	 * @return
+	 */
+	RPMapEntityList getEntityList(RPCoordinate coordinate) {
+		return entitiesByCoordinate.get(coordinate);
 	}
 
 	/**
@@ -71,11 +87,17 @@ class MapEntityRegistry implements Registry {
 	}
 
 	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity) {
-		entitiesByCoordinate.put(coordinate, mapEntity);
+		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
+		if (entityList == null) {
+			entityList =  new RPMapEntityList();
+			entitiesByCoordinate.put(coordinate, entityList);
+		}
+
+		entityList.addFirst(mapEntity);
 		checkAndModifyLookup(mapEntity);
 	}
 
-	TreeMap<RPCoordinate, RPMapEntity<?>> getEntitiesByCoordinate() {
+	TreeMap<RPCoordinate, RPMapEntityList> getEntitiesByCoordinate() {
 		return entitiesByCoordinate;
 	}
 
@@ -102,12 +124,29 @@ class MapEntityRegistry implements Registry {
 		}
 	}
 
+	private RPMapEntity<?> getOnlyEntityAtCoordinate(String coordinateArg) throws AmbiguousSelectionException, InvalidCoordinateException {
+		RPMapEntity<?> entity;
+
+		RPMapEntityList entityList = entitiesByCoordinate.get(new CoordinateParser().parseCoordinates(coordinateArg));
+		if (Util.isEmptyCollection(entityList)) {
+			// TODO what happens if the user selects a valid but empty coordinate? Presently returns null (and null is appropriately checked later)
+			// Should it instead attempt to parse as entity name?
+			return null;
+		}
+
+		if (entityList.size() > 1) {
+			throw new AmbiguousSelectionException("Selection ambiguous: multiple entities have the same coordinate.");
+		}
+
+		return entityList.get(0);
+	}
+
 	/**
 	 * Attempt to parse an entity
 	 * @param mapEntityArg
 	 * @return
 	 */
-	RPMapEntity<?> parseEntity(String mapEntityArg) {
+	RPMapEntity<?> parseEntity(String mapEntityArg) throws AmbiguousSelectionException {
 		if (Util.isEmptyString(mapEntityArg)) {
 			return null;
 		}
@@ -146,7 +185,7 @@ class MapEntityRegistry implements Registry {
 		}
 	}
 
-	RPMapEntity<?> parseEntityByType(String arg, SearchType searchType) throws NullPointerException {
+	RPMapEntity<?> parseEntityByType(String arg, SearchType searchType) throws NullPointerException, AmbiguousSelectionException {
 		if (searchType == null) {
 			throw new NullPointerException("SearchType must be specified.");
 		}
@@ -155,6 +194,7 @@ class MapEntityRegistry implements Registry {
 			return null;
 		}
 
+
 		RPMapEntity<?> entity = null;
 		switch (searchType) {
 			case SYMBOL:
@@ -162,17 +202,17 @@ class MapEntityRegistry implements Registry {
 				break;
 			case COORDINATE:
 				try {
-					entity = entitiesByCoordinate.get(new CoordinateParser().parseCoordinates(arg));
+					entity = getOnlyEntityAtCoordinate(arg);
 				} catch (InvalidCoordinateException e) {
-					entity = entitiesByName.get(arg); // Assume the arg is an entity instead of a coordinate
+					entity = entitiesByName.get(arg.toLowerCase()); // Assume the arg is an entity instead of a coordinate
 				}
 				break;
 			case ENTITY:
-				entity = entitiesByName.get(arg);
+				entity = entitiesByName.get(arg.toLowerCase());
 
 				if (entity == null) {
 					try {
-						entity = entitiesByCoordinate.get(new CoordinateParser().parseCoordinates(arg));
+						entity = getOnlyEntityAtCoordinate(arg);
 					} catch (InvalidCoordinateException e) {
 						// Well, we tried. It's totally unparsable. Do nothing
 					}
@@ -183,14 +223,26 @@ class MapEntityRegistry implements Registry {
 		return entity;
 	}
 
-	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) {
+	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) throws NullPointerException {
 		if (mapEntity == null) {
-			return; // TODO Throw exception
+			throw new NullPointerException("mapEntity cannot be null");
 		}
 
 		RPCoordinate srcCoordinate = mapEntity.getCoordinate();
-		entitiesByCoordinate.remove(srcCoordinate); // FIXME Change to show first entity under
-		setEntity(destCoordinate, mapEntity); // FIXME Change to handle occupied dest coord
+
+		// Get the entity from the src list
+		RPMapEntityList srcEntityList = entitiesByCoordinate.get(srcCoordinate);
+		// Theoretically should never be null/empty list
+
+		srcEntityList.remove(mapEntity);
+		// Optimize cleanup by removing old references
+		// Functional overhead is very minor while saving on memory overhead can have large benefits
+		if (srcEntityList.isEmpty()) {
+			entitiesByCoordinate.remove(srcCoordinate);
+		}
+
+		setEntity(destCoordinate, mapEntity);
+
 		mapEntity.setCoordinate(destCoordinate);
 	}
 }

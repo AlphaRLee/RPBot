@@ -51,7 +51,7 @@ public class MapCommandHandler {
 			case "help": default:
 				cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
 						+  "\tshow, move, set, legend, list, new, delete");
-				cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+				cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 				break;
 		}
 	}
@@ -76,7 +76,7 @@ public class MapCommandHandler {
 			cmdParser.setErrorDescription("No map found" + errorExtension + "."
 					+ "\nTry using " + MessageListener.COMMAND_PREFIX + "map list");
 
-			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 		}
 
 		return map;
@@ -89,18 +89,27 @@ public class MapCommandHandler {
 		} catch (InvalidCoordinateException e) {
 			e.buildFormattedExceptionMessage(arg);
 			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
-			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 		}
 
 		return rc;
 	}
 
 	private RPMapEntity<?> parseMapEntity(RPMap map, String arg) {
-		RPMapEntity<?> mapEntity = map.parseMapEntity(arg);
+		RPMapEntity<?> mapEntity = null;
+
+		try {
+			mapEntity = map.parseMapEntity(arg);
+		} catch (AmbiguousSelectionException e) {
+			cmdParser.setErrorDescription(" Try searching by the entity's name instead."); // TODO Buff up the description
+			cmdParser.sendUserError(e.getMessage());
+			// TODO Print out a legend of all entities with the ambiguous common data for user to select
+			return null;
+		}
 
 		if (mapEntity == null) {
 			cmdParser.setErrorDescription("No entity was found at/by the name **" + arg + "** on the map " + map.getName() + ".");
-			cmdParser.sendUsageError(cmdParser.getLastUsageMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 			return null;
 		}
 

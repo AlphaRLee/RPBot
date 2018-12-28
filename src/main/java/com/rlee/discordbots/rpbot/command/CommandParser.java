@@ -43,10 +43,11 @@ public class CommandParser {
 	}
 
 	/**
-	 * Print an error message to the text channel showing proper usage, with the error description following if set.
+	 * Print an error message to the text channel indicating the user has made an error.
+	 * Commonly used to indicate proper usage, with the error description following if set.
 	 * @param errorMessage
 	 */
-	public void sendUsageError(String errorMessage) {
+	public void sendUserError(String errorMessage) {
 		String errMsg = Util.isEmptyString(errorMessage) ? "" : errorMessage;
 		String errDesc = Util.isEmptyString(errorDescription) ? "" : errorDescription;
 
@@ -95,7 +96,7 @@ public class CommandParser {
 
 		lastUsageMessage = buildUsageErrorMessage(requiredParameters, optionalParameters);
 		if (!result) {
-			sendUsageError(lastUsageMessage);
+			sendUserError(lastUsageMessage);
 		}
 		return result;
 	}
