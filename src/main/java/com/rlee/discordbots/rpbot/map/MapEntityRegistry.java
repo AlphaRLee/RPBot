@@ -14,7 +14,7 @@ class MapEntityRegistry implements Registry {
 	}
 
 	private TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate;
-	private Map<Character, RPMapEntity<?>> entitiesBySymbol; //Lookup for all unique entities that are generated
+	private Map<Character, RPMapEntityList> entitiesBySymbol; //Lookup for all unique entities that are generated
 	private Map<String, RPMapEntity<?>> entitiesByName; // Entities by full name
 
 	MapEntityRegistry() {
@@ -30,6 +30,7 @@ class MapEntityRegistry implements Registry {
 	}
 
 	/**
+	 * @deprecated FIXME Is this even being used?
 	 * Get the first entity listed at the given coordinate
 	 * @param coordinate The coordinate to get the entity at
 	 * @return The first entity, or null if no entity exists at the coordinate
@@ -53,12 +54,27 @@ class MapEntityRegistry implements Registry {
 	}
 
 	/**
-	 * Get the unique entity represented by the given character
+	 * @deprecated FIXME Is this even being used?
+	 * Get the first entity listed with the given symbol
 	 * @param symbol The character representation of the entity
 	 * @return The entity. Always return first inserted in case of symbol conflict
 	 */
 	Object getEntity(Character symbol) {
-		return entitiesBySymbol.get(symbol).getEntity();
+		RPMapEntityList entityList = entitiesBySymbol.get(symbol);
+		if (Util.isEmptyCollection(entityList)) {
+			return null;
+		}
+
+		return entityList.get(0).getEntity();
+	}
+
+	/**
+	 * Get teh list of entities with the given symbol
+	 * @param symbol
+	 * @return
+	 */
+	RPMapEntityList getEntityList(Character symbol) {
+		return entitiesBySymbol.get(symbol);
 	}
 
 	/**
@@ -87,18 +103,53 @@ class MapEntityRegistry implements Registry {
 	}
 
 	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity) {
-		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
-		if (entityList == null) {
-			entityList =  new RPMapEntityList();
-			entitiesByCoordinate.put(coordinate, entityList);
+//		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
+//		if (entityList == null) {
+//			entityList =  new RPMapEntityList();
+//			entitiesByCoordinate.put(coordinate, entityList);
+//		}
+//
+//		entityList.addFirst(mapEntity);
+
+		if (!checkAndAddEntityByName(mapEntity)) {
+			return; // TODO add an error message about unique name failure
 		}
 
-		entityList.addFirst(mapEntity);
-		checkAndModifyLookup(mapEntity);
+		addEntityToMappedList(entitiesByCoordinate, mapEntity.getCoordinate(), mapEntity, true);
+		addEntityToMappedList(entitiesBySymbol, mapEntity.getSymbol(), mapEntity);
 	}
 
-	TreeMap<RPCoordinate, RPMapEntityList> getEntitiesByCoordinate() {
-		return entitiesByCoordinate;
+	/**
+	 * Add an entity to the appropriate map of RPMapEntityLists. This always adds the entity at the end of the RPMapEntityList
+	 * @param mappedList
+	 * @param key The key of the map
+	 * @param mapEntity
+	 * @param <K> The type of the key of the map
+	 */
+	private <K> void addEntityToMappedList(Map<K, RPMapEntityList> mappedList, K key, RPMapEntity<?> mapEntity) {
+		addEntityToMappedList(mappedList, key, mapEntity, false);
+	}
+
+	/**
+	 * Add an entity to the appropriate map of RPMapEntityLists
+	 * @param mappedList
+	 * @param key The key of the map
+	 * @param mapEntity
+	 * @param addFirst If set to true, then the entity is added as the first element within the RPMapEntityList
+	 * @param <K> The type of the key of the map
+	 */
+	private <K> void addEntityToMappedList(Map<K, RPMapEntityList> mappedList, K key, RPMapEntity<?> mapEntity, boolean addFirst) {
+		RPMapEntityList entityList = mappedList.get(key);
+		if (entityList == null) {
+			entityList =  new RPMapEntityList();
+			mappedList.put(key, entityList);
+		}
+
+		if (addFirst) {
+			entityList.addFirst(mapEntity);
+		} else {
+			entityList.add(mapEntity);
+		}
 	}
 
 	/**
@@ -106,22 +157,23 @@ class MapEntityRegistry implements Registry {
 	 * If the given entity's symbol is already listed, then do nothing.
 	 * If the entity is not listed, then add the entry to the lookup.
 	 * @param entity
+	 * @return True if the entity's name is unique and successfully added, false if the name is not unique (and therefore not added)
 	 */
-	private void checkAndModifyLookup(RPMapEntity<?> entity) {
-		char symbol = entity.getSymbol();
-		if (entitiesBySymbol.containsKey(symbol)) {
-			//TODO Change to store redundant entries in arraylist. Present implementation: Do nothing
-		} else {
-			entitiesBySymbol.put(symbol, entity);
-		}
-
-		// Repeat process for entities by name
+	private boolean checkAndAddEntityByName(RPMapEntity<?> entity) {
+		// Allow only unique entries for names
 		String name = entity.getName().toLowerCase();
 		if (entitiesByName.containsKey(name)) {
 			//TODO Change to store redundant entries in arraylist. Present implementation: Do nothing
+			return false;
 		} else {
 			entitiesByName.put(name, entity);
 		}
+
+		return true;
+	}
+
+	TreeMap<RPCoordinate, RPMapEntityList> getEntitiesByCoordinate() {
+		return entitiesByCoordinate;
 	}
 
 	private RPMapEntity<?> getOnlyEntityAtCoordinate(String coordinateArg) throws AmbiguousSelectionException, InvalidCoordinateException {
@@ -136,6 +188,21 @@ class MapEntityRegistry implements Registry {
 
 		if (entityList.size() > 1) {
 			throw new AmbiguousSelectionException("Selection ambiguous: multiple entities have the same coordinate.");
+		}
+
+		return entityList.get(0);
+	}
+
+	private RPMapEntity<?> getOnlyEntityBySymbol(String symbolArg) throws AmbiguousSelectionException {
+		RPMapEntity<?> entity;
+
+		RPMapEntityList entityList = entitiesBySymbol.get(symbolArg.charAt(0)); // TODO Should give user leeway and let selections be case-insensitive?
+		if (Util.isEmptyCollection(entityList)) {
+			return null;
+		}
+
+		if (entityList.size() > 1) {
+			throw new AmbiguousSelectionException("Selection ambiguous: multiple entities have the same symbol.");
 		}
 
 		return entityList.get(0);
@@ -194,11 +261,10 @@ class MapEntityRegistry implements Registry {
 			return null;
 		}
 
-
 		RPMapEntity<?> entity = null;
 		switch (searchType) {
 			case SYMBOL:
-				entity = entitiesBySymbol.get(arg.charAt(0));
+				entity = getOnlyEntityBySymbol(arg);
 				break;
 			case COORDINATE:
 				try {
@@ -241,8 +307,7 @@ class MapEntityRegistry implements Registry {
 			entitiesByCoordinate.remove(srcCoordinate);
 		}
 
-		setEntity(destCoordinate, mapEntity);
-
+		addEntityToMappedList(entitiesByCoordinate, destCoordinate, mapEntity, true);
 		mapEntity.setCoordinate(destCoordinate);
 	}
 }

@@ -18,7 +18,7 @@ public class RPMap {
 
 	private static CoordinateParser coordinateParser;
 	private MapEntityRegistry mapEntityRegistry;
-	private RPMapPrinter mapPrinter;
+	private MapPrinter mapPrinter;
 
 	private Message sourceMessage;
 	
@@ -27,7 +27,7 @@ public class RPMap {
 
 		coordinateParser = new CoordinateParser();
 		mapEntityRegistry = new MapEntityRegistry();
-		mapPrinter = new RPMapPrinter();
+		mapPrinter = new MapPrinter();
 	}
 
 	public String getName() {
@@ -38,15 +38,27 @@ public class RPMap {
 		this.sourceMessage = sourceMessage;
 	}
 
+	/**
+	 * @deprecated TODO Is this being used?
+	 * @param row
+	 * @param col
+	 * @return
+	 */
 	public Object getEntity(int row, int col) {
 		return mapEntityRegistry.getEntity(new RPCoordinate(row, col));
 	}
 
+	/**
+	 * @deprecated TODO Is this being used?
+	 * @param coordinate
+	 * @return
+	 */
 	public Object getEntity(RPCoordinate coordinate) {
 		return mapEntityRegistry.getEntity(coordinate);
 	}
 
 	/**
+	 * @deprecated TODO is this being used?
 	 * Get the unique entity represented by the given character
 	 * @param c The character representation of the entity
 	 * @return The entity, or null if zero or more than 1 instance found.

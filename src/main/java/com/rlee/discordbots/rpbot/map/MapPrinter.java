@@ -4,7 +4,7 @@ import com.rlee.discordbots.rpbot.Util;
 
 import java.util.*;
 
-class RPMapPrinter {
+class MapPrinter {
 	private Iterator<Map.Entry<RPCoordinate, RPMapEntityList>> printableEntityIterator;
 	private Map.Entry<RPCoordinate, RPMapEntityList> nextPrintableEntityList;
 
@@ -31,11 +31,11 @@ class RPMapPrinter {
 	private String blankInnerRow = null;
 	private String blankRowIndex;
 
-	RPMapPrinter() {
+	MapPrinter() {
 		this(8, 8);
 	}
 
-	RPMapPrinter(int rowCount, int colCount) {
+	MapPrinter(int rowCount, int colCount) {
 		this.rowCount = rowCount;
 		this.colCount = colCount;
 	}
