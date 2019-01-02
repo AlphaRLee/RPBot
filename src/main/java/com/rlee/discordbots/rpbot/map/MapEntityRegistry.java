@@ -30,42 +30,12 @@ class MapEntityRegistry implements Registry {
 	}
 
 	/**
-	 * @deprecated FIXME Is this even being used?
-	 * Get the first entity listed at the given coordinate
-	 * @param coordinate The coordinate to get the entity at
-	 * @return The first entity, or null if no entity exists at the coordinate
-	 */
-	Object getEntity(RPCoordinate coordinate) {
-		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
-		if (Util.isEmptyCollection(entityList)) {
-			return null;
-		}
-
-		return entityList.get(0).getEntity();
-	}
-
-	/**
 	 * Get the list of entities at the given coordinate
 	 * @param coordinate
 	 * @return
 	 */
 	RPMapEntityList getEntityList(RPCoordinate coordinate) {
 		return entitiesByCoordinate.get(coordinate);
-	}
-
-	/**
-	 * @deprecated FIXME Is this even being used?
-	 * Get the first entity listed with the given symbol
-	 * @param symbol The character representation of the entity
-	 * @return The entity. Always return first inserted in case of symbol conflict
-	 */
-	Object getEntity(Character symbol) {
-		RPMapEntityList entityList = entitiesBySymbol.get(symbol);
-		if (Util.isEmptyCollection(entityList)) {
-			return null;
-		}
-
-		return entityList.get(0).getEntity();
 	}
 
 	/**
