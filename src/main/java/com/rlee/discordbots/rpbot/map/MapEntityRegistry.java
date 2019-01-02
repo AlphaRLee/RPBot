@@ -17,6 +17,9 @@ class MapEntityRegistry implements Registry {
 	private Map<Character, RPMapEntityList> entitiesBySymbol; //Lookup for all unique entities that are generated
 	private Map<String, RPMapEntity<?>> entitiesByName; // Entities by full name
 
+	static final String AUTO_RENAME_INFIX = "-";
+	static final int MAX_AUTO_RENAME_ATTEMPTS = 10001;
+
 	MapEntityRegistry() {
 		entitiesByCoordinate = new TreeMap<>();
 		entitiesBySymbol = new LinkedHashMap<>();
@@ -72,16 +75,23 @@ class MapEntityRegistry implements Registry {
 		setEntity(coordinate, new RPMapEntity<E>(symbol, entity, coordinate));
 	}
 
+	/**
+	 *
+	 * @param coordinate
+	 * @param mapEntity
+	 */
 	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity) {
-//		RPMapEntityList entityList = entitiesByCoordinate.get(coordinate);
-//		if (entityList == null) {
-//			entityList =  new RPMapEntityList();
-//			entitiesByCoordinate.put(coordinate, entityList);
-//		}
-//
-//		entityList.addFirst(mapEntity);
+		setEntity(coordinate, mapEntity, true);
+	}
 
-		if (!checkAndAddEntityByName(mapEntity)) {
+	/**
+	 * Set an entity at the given coordinate
+	 * @param coordinate
+	 * @param mapEntity
+	 * @param allowAutoRename If true, then any name collisions will be resolved by adding a unique name, if false then the entity is not added in the case of a name collision
+	 */
+	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity, boolean allowAutoRename) {
+		if (!checkAndAddEntityByName(mapEntity, allowAutoRename)) {
 			return; // TODO add an error message about unique name failure
 		}
 
@@ -129,17 +139,47 @@ class MapEntityRegistry implements Registry {
 	 * @param entity
 	 * @return True if the entity's name is unique and successfully added, false if the name is not unique (and therefore not added)
 	 */
-	private boolean checkAndAddEntityByName(RPMapEntity<?> entity) {
+	private boolean checkAndAddEntityByName(RPMapEntity<?> entity, boolean allowAutoRename) {
 		// Allow only unique entries for names
 		String name = entity.getName().toLowerCase();
 		if (entitiesByName.containsKey(name)) {
-			//TODO Change to store redundant entries in arraylist. Present implementation: Do nothing
-			return false;
+			if (allowAutoRename) {
+				String entityRename = getUniqueEntityName(entity.getName());
+				if (entityRename == null) {
+					return false; // TODO throw exception here
+				}
+
+				entity.setName(entityRename);
+				entitiesByName.put(entityRename.toLowerCase(), entity);
+			} else {
+				return false;
+			}
 		} else {
 			entitiesByName.put(name, entity);
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get a unique name based on the given entity name
+	 * @param entityNameSeed The entity name to build a unique name from
+	 * @return The unique name or null if no valid unique name could be found
+	 */
+	private String getUniqueEntityName(String entityNameSeed) {
+		// Try cycling through to find the first valid auto-rename
+		String entityRename;
+		int i;
+
+		// Note starting index on 1
+		for (i = 1; i < MAX_AUTO_RENAME_ATTEMPTS; i++) {
+			entityRename = entityNameSeed + AUTO_RENAME_INFIX + i;
+			if (!entitiesByName.containsKey(entityRename.toLowerCase())) {
+				return entityRename; // Successfully found unique name
+			}
+		}
+
+		return null; // No unique name found TODO throw exception instead
 	}
 
 	TreeMap<RPCoordinate, RPMapEntityList> getEntitiesByCoordinate() {
