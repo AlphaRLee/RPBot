@@ -14,15 +14,15 @@ class MapEntityRegistry implements Registry {
 	}
 
 	private TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate;
-	private Map<Character, RPMapEntityList> entitiesBySymbol; //Lookup for all unique entities that are generated
+	private TreeMap<Character, RPMapEntityList> entitiesBySymbol; //Lookup for all unique entities that are generated
 	private Map<String, RPMapEntity<?>> entitiesByName; // Entities by full name
 
 	static final String AUTO_RENAME_INFIX = "-";
-	static final int MAX_AUTO_RENAME_ATTEMPTS = 10001;
+	static final int MAX_AUTO_RENAME_ATTEMPTS = 10000;
 
 	MapEntityRegistry() {
-		entitiesByCoordinate = new TreeMap<>();
-		entitiesBySymbol = new LinkedHashMap<>();
+		entitiesByCoordinate = new TreeMap<>(); // Store entries sorted by coordinate
+		entitiesBySymbol = new TreeMap<>(); // Store entries alphabetically
 		entitiesByName = new HashMap<>();
 	}
 
@@ -186,36 +186,34 @@ class MapEntityRegistry implements Registry {
 		return entitiesByCoordinate;
 	}
 
-	private RPMapEntity<?> getOnlyEntityAtCoordinate(String coordinateArg) throws AmbiguousSelectionException, InvalidCoordinateException {
-		RPMapEntity<?> entity;
-
-		RPMapEntityList entityList = entitiesByCoordinate.get(new CoordinateParser().parseCoordinates(coordinateArg));
-		if (Util.isEmptyCollection(entityList)) {
-			// TODO what happens if the user selects a valid but empty coordinate? Presently returns null (and null is appropriately checked later)
-			// Should it instead attempt to parse as entity name?
-			return null;
-		}
-
-		if (entityList.size() > 1) {
-			throw new AmbiguousSelectionException("Selection ambiguous: multiple entities have the same coordinate.");
-		}
-
-		return entityList.get(0);
+	TreeMap<Character,RPMapEntityList> getEntitiesBySymbol() {
+		return entitiesBySymbol;
 	}
 
-	private RPMapEntity<?> getOnlyEntityBySymbol(String symbolArg) throws AmbiguousSelectionException {
-		RPMapEntity<?> entity;
+	private RPMapEntityList parseEntityListAtCoordinate(String coordinateArg) throws InvalidCoordinateException {
+		return entitiesByCoordinate.get(new CoordinateParser().parseCoordinates(coordinateArg));
+	}
 
-		RPMapEntityList entityList = entitiesBySymbol.get(symbolArg.charAt(0)); // TODO Should give user leeway and let selections be case-insensitive?
+	/**
+	 * @param entityList
+	 * @param ambiguousSelectionMessage
+	 * @return
+	 * @throws AmbiguousSelectionException
+	 */
+	private RPMapEntity<?> getOnlyEntityFromList(RPMapEntityList entityList, String ambiguousSelectionMessage) throws AmbiguousSelectionException {
 		if (Util.isEmptyCollection(entityList)) {
 			return null;
 		}
 
 		if (entityList.size() > 1) {
-			throw new AmbiguousSelectionException("Selection ambiguous: multiple entities have the same symbol.");
+			throw new AmbiguousSelectionException(ambiguousSelectionMessage);
 		}
 
-		return entityList.get(0);
+		 return entityList.get(0);
+	}
+
+	RPMapEntityList parseEntityListBySymbol(String symbolArg) {
+		return entitiesBySymbol.get(symbolArg.charAt(0)); // TODO Should give user leeway and let selections be case-insensitive?
 	}
 
 	/**
@@ -232,6 +230,19 @@ class MapEntityRegistry implements Registry {
 	}
 
 	/**
+	 * Parse an entity and get the RPMapEntityList associated with the parsed entity
+	 * @param mapEntityArg
+	 * @return
+	 */
+	RPMapEntityList parseMapEntityList(String mapEntityArg) throws InvalidCoordinateException {
+		if (Util.isEmptyString(mapEntityArg)) {
+			return null;
+		}
+
+		return parseEntityListByType(mapEntityArg, parseSearchType(mapEntityArg));
+	}
+
+	/**
 	 * Attempt to parse the search type of the arg based on the following rules:
 	 * <br/>If the arg is just 1 character long, it is assumed to be a symbol
 	 * <br/>If the arg is 2 characters long, it is assumed to be a coordinate
@@ -239,7 +250,7 @@ class MapEntityRegistry implements Registry {
 	 * @param arg The string to parse the search type of
 	 * @return The assumed search type
 	 */
-	private SearchType parseSearchType(String arg) {
+	SearchType parseSearchType(String arg) {
 		int offset = 0;
 
 		// Testing for negative coordinates
@@ -274,11 +285,11 @@ class MapEntityRegistry implements Registry {
 		RPMapEntity<?> entity = null;
 		switch (searchType) {
 			case SYMBOL:
-				entity = getOnlyEntityBySymbol(arg);
+				entity = getOnlyEntityFromList(parseEntityListBySymbol(arg), "Selection ambiguous: multiple entities have the same symbol.");
 				break;
 			case COORDINATE:
 				try {
-					entity = getOnlyEntityAtCoordinate(arg);
+					entity = getOnlyEntityFromList(parseEntityListAtCoordinate(arg), "Selection ambiguous: multiple entities have the same coordinate.");
 				} catch (InvalidCoordinateException e) {
 					entity = entitiesByName.get(arg.toLowerCase()); // Assume the arg is an entity instead of a coordinate
 				}
@@ -288,7 +299,7 @@ class MapEntityRegistry implements Registry {
 
 				if (entity == null) {
 					try {
-						entity = getOnlyEntityAtCoordinate(arg);
+						entity = getOnlyEntityFromList(parseEntityListAtCoordinate(arg), "Selection ambiguous: multiple entities have the same coordinate.");
 					} catch (InvalidCoordinateException e) {
 						// Well, we tried. It's totally unparsable. Do nothing
 					}
@@ -297,6 +308,39 @@ class MapEntityRegistry implements Registry {
 		}
 
 		return entity;
+	}
+
+	/**
+	 * @deprecated Is this being used?
+	 * @param arg
+	 * @param searchType
+	 * @return
+	 * @throws NullPointerException
+	 * @throws InvalidCoordinateException
+	 */
+	private RPMapEntityList parseEntityListByType(String arg,  SearchType searchType) throws  NullPointerException, InvalidCoordinateException {
+		if (searchType == null) {
+			throw new NullPointerException("SearchType must be specified.");
+		}
+
+		if (Util.isEmptyString(arg)) {
+			return null;
+		}
+
+		RPMapEntityList entityList = null;
+		switch (searchType) {
+			case SYMBOL:
+				entityList = parseEntityListBySymbol(arg);
+				break;
+			case COORDINATE:
+				entityList = parseEntityListAtCoordinate(arg);
+				break;
+			case ENTITY:
+				// TODO Determine behaviour here. Currently passes to null (not supported)
+				break;
+		}
+
+		return entityList;
 	}
 
 	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) throws NullPointerException {

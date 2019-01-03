@@ -41,6 +41,7 @@ public class MapCommandHandler {
 				setOnMapCmd(args);
 				break;
 			case "legend":
+				legendCmd(args);
 				break;
 			case "list":
 				break;
@@ -87,12 +88,16 @@ public class MapCommandHandler {
 		try {
 			rc = RPMap.parseCoordinates(arg);
 		} catch (InvalidCoordinateException e) {
-			e.buildFormattedExceptionMessage(arg);
-			cmdParser.setErrorDescription(e.getFormattedExceptionMessage());
-			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
+			handleInvalidCoordinateException(e, arg);
 		}
 
 		return rc;
+	}
+
+	private void handleInvalidCoordinateException(InvalidCoordinateException exception, String coordinateArg) {
+		exception.buildFormattedExceptionMessage(coordinateArg);
+		cmdParser.setErrorDescription(exception.getFormattedExceptionMessage());
+		cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 	}
 
 	private RPMapEntity<?> parseMapEntity(RPMap map, String arg) {
@@ -101,7 +106,9 @@ public class MapCommandHandler {
 		try {
 			mapEntity = map.parseMapEntity(arg);
 		} catch (AmbiguousSelectionException e) {
-			cmdParser.setErrorDescription(" Try searching by the entity's name instead."); // TODO Buff up the description
+			String ambiguousSelectionLegend = getLegendForSelection(map, arg);
+
+			cmdParser.setErrorDescription(ambiguousSelectionLegend + "\nTry searching by the entity's name instead."); // TODO Buff up the description
 			cmdParser.sendUserError(e.getMessage());
 			// TODO Print out a legend of all entities with the ambiguous common data for user to select
 			return null;
@@ -193,5 +200,36 @@ public class MapCommandHandler {
 		RPCoordinate oldCoordinate = mapEntity.getCoordinate();
 		map.moveEntityToCoordinate(mapEntity, destCoord);
 		channel.sendMessage("**" + mapEntity.getName() + "** was moved from **" + oldCoordinate + "** to **" + mapEntity.getCoordinate() + "**.").queue();
+	}
+
+	private void legendCmd(String[] args) {
+		cmdParser.setErrorDescription("Show the map legend.");
+		if (!cmdParser.validateParameterLength(new String[] {"legend"}, "symbol | coordinate")) {
+			return;
+		}
+
+		RPMap map = mapRegistry.getActiveMap();
+		if (args.length > 2) {
+			// Show the legend entry for the particular arg (symbol or coordinate)
+			String legendOutput = getLegendForSelection(map, args[2]);
+			if (legendOutput == null) {
+				return;
+			}
+
+			channel.sendMessage(legendOutput).queue();
+		} else {
+			// Show all legend entries
+			channel.sendMessage(map.showLegendBySymbols()).queue(); // TODO Handle maps with >20 entities
+		}
+	}
+
+	private String getLegendForSelection(RPMap map, String arg) {
+		try {
+			return map.showLegendByParsedArg(arg);
+		} catch (InvalidSearchTypeException e) {
+			cmdParser.setErrorDescription(e.getMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
+			return null;
+		}
 	}
 }

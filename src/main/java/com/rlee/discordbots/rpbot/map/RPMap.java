@@ -1,5 +1,6 @@
 package com.rlee.discordbots.rpbot.map;
 
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import net.dv8tion.jda.core.entities.Message;
 
@@ -19,6 +20,7 @@ public class RPMap {
 	private static CoordinateParser coordinateParser;
 	private MapEntityRegistry mapEntityRegistry;
 	private MapPrinter mapPrinter;
+	private MapLegendPrinter mapLegendPrinter;
 
 	private Message sourceMessage;
 	
@@ -28,6 +30,7 @@ public class RPMap {
 		coordinateParser = new CoordinateParser();
 		mapEntityRegistry = new MapEntityRegistry();
 		mapPrinter = new MapPrinter();
+		mapLegendPrinter = new MapLegendPrinter();
 	}
 
 	public String getName() {
@@ -74,6 +77,35 @@ public class RPMap {
 		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, mapEntityRegistry.getEntitiesByCoordinate()));
 	}
 
+	public String showLegendBySymbols() {
+		return mapLegendPrinter.showLegendBySymbols(name, mapEntityRegistry.getEntitiesBySymbol());
+	}
+
+	String showLegendByParsedArg(String arg) throws InvalidSearchTypeException {
+		if (Util.isEmptyString(arg)) {
+			return null;
+		}
+
+		String invalidSearchTypeExceptionMessage = "Selection could not be performed: " + arg + " is not recognized as a symbol or a coordinate.";
+
+		// TODO Move this dirty code elsewhere inside MapEntityRegistry
+		MapEntityRegistry.SearchType searchType = mapEntityRegistry.parseSearchType(arg);
+		switch (searchType) {
+			case SYMBOL:
+				char symbol = arg.charAt(0);
+				return mapLegendPrinter.getSymbolLegend(symbol, mapEntityRegistry.getEntityList(symbol));
+			case COORDINATE:
+				try {
+					RPCoordinate coord = parseCoordinates(arg);
+					return mapLegendPrinter.getCoordinateLegend(coord, mapEntityRegistry.getEntityList(coord));
+				} catch (InvalidCoordinateException e) {
+					throw new InvalidSearchTypeException(invalidSearchTypeExceptionMessage);
+				}
+			default:
+				throw new InvalidSearchTypeException(invalidSearchTypeExceptionMessage);
+		}
+	}
+
 	/**
 	 * Calculate the top right corner, inclusive
 	 * @param bottomLeftCorner
@@ -85,18 +117,16 @@ public class RPMap {
 		return new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
 	}
 
-//	void moveEntityToCoordinate(String entityArg, String destCoordinateArg) throws InvalidCoordinateException {
-//		RPCoordinate destCoordinate = parseCoordinates(destCoordinateArg);
-//		RPMapEntity<?> mapEntity = mapEntityRegistry.parseEntity(entityArg);
-//		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
-//	}
-
 	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) {
 		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
 	}
 
 	RPMapEntity<?> parseMapEntity(String mapEntityArg) throws AmbiguousSelectionException {
 		return mapEntityRegistry.parseEntity(mapEntityArg);
+	}
+
+	RPMapEntityList parseMapEntityList(String mapEntityArg) throws InvalidCoordinateException {
+		return mapEntityRegistry.parseMapEntityList(mapEntityArg);
 	}
 
 	static RPCoordinate parseCoordinates(String coordinateArg) throws InvalidCoordinateException {
