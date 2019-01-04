@@ -23,7 +23,7 @@ public class MapCommandHandler {
 		setup(args, sender, game, channel);
 
 		cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
-				+  "\tshow, move, set, legend, list, new, delete");
+				+  "\tshow, move, add, legend, list, new, delete");
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
 		}
@@ -37,8 +37,8 @@ public class MapCommandHandler {
 			case "move":
 				moveCmd(args);
 				break;
-			case "set":
-				setOnMapCmd(args);
+			case "add":
+				addToMapCmd(args);
 				break;
 			case "legend":
 				legendCmd(args);
@@ -51,7 +51,7 @@ public class MapCommandHandler {
 				break;
 			case "help": default:
 				cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
-						+  "\tshow, move, set, legend, list, new, delete");
+						+  "\tshow, move, add, legend, list, new, delete");
 				cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 				break;
 		}
@@ -107,10 +107,9 @@ public class MapCommandHandler {
 			mapEntity = map.parseMapEntity(arg);
 		} catch (AmbiguousSelectionException e) {
 			String ambiguousSelectionLegend = getLegendForSelection(map, arg);
-
-			cmdParser.setErrorDescription(ambiguousSelectionLegend + "\nTry searching by the entity's name instead."); // TODO Buff up the description
+			cmdParser.setErrorDescription(ambiguousSelectionLegend + "\nTry searching by the entity's name instead.");
 			cmdParser.sendUserError(e.getMessage());
-			// TODO Print out a legend of all entities with the ambiguous common data for user to select
+
 			return null;
 		}
 
@@ -123,10 +122,20 @@ public class MapCommandHandler {
 		return mapEntity;
 	}
 
+	private String getLegendForSelection(RPMap map, String arg) {
+		try {
+			return map.showLegendByParsedArg(arg);
+		} catch (InvalidSearchTypeException e) {
+			cmdParser.setErrorDescription(e.getMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
+			return null;
+		}
+	}
+
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
 				+ "[map_name]: The map to show. Defaults to active map.");
-		if (!cmdParser.validateParameterLength(new String[] {"show"}, "map_name")) {
+		if (!cmdParser.validateParameterLength("show", null, "map_name")) {
 			return;
 		}
 
@@ -160,8 +169,8 @@ public class MapCommandHandler {
 		channel.sendMessage(map.showMap(0, 0)).queue();
 	}
 
-	private void setOnMapCmd(String args[]) {
-		if (!cmdParser.validateParameterLength(new String[] {"set", "entity", "coordinate"}, "map_name")) {
+	private void addToMapCmd(String args[]) {
+		if (!cmdParser.validateParameterLength("add", new String[] {"entity", "coordinate"}, "map_name")) {
 			return;
 		}
 
@@ -178,7 +187,7 @@ public class MapCommandHandler {
 
 	private void moveCmd(String args[]) {
 		cmdParser.setErrorDescription("Move an entity on the map to the provided coordinate.\nCan specify character symbol, starting coordinate, or entity.");
-		if (!cmdParser.validateParameterLength(new String[] {"move", "symbol | source_coordinate | entity", "destination_coordinate"}, "map_name")) {
+		if (!cmdParser.validateParameterLength("move", new String[] {"symbol | source_coordinate | entity", "destination_coordinate"}, "map_name")) {
 			return;
 		}
 
@@ -204,7 +213,7 @@ public class MapCommandHandler {
 
 	private void legendCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map legend.");
-		if (!cmdParser.validateParameterLength(new String[] {"legend"}, "symbol | coordinate")) {
+		if (!cmdParser.validateParameterLength("legend", null, "symbol | coordinate")) {
 			return;
 		}
 
@@ -220,16 +229,6 @@ public class MapCommandHandler {
 		} else {
 			// Show all legend entries
 			channel.sendMessage(map.showLegendBySymbols()).queue(); // TODO Handle maps with >20 entities
-		}
-	}
-
-	private String getLegendForSelection(RPMap map, String arg) {
-		try {
-			return map.showLegendByParsedArg(arg);
-		} catch (InvalidSearchTypeException e) {
-			cmdParser.setErrorDescription(e.getMessage());
-			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
-			return null;
 		}
 	}
 }

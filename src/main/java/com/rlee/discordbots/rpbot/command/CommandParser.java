@@ -68,7 +68,45 @@ public class CommandParser {
 		msgBuilder.setDescription(errDesc);
 		channel.sendMessage(msgBuilder.build()).queue();
 	}
-	
+
+	/**
+	 * Validate that the number or args matches the requested length.
+	 * If arg length is not met, then an error message is sent with the parameters demanded.
+	 * If the first character in a parameter is the '\b' backspace escape character, then it is omitted and the
+	 * whitespace character immediately proceeding it is removed.<br/>
+	 * E.g. an optionalParameters array looking like: ["name", "gender, "\bage"] would look like: <br/>
+	 * [name] [gender][age]
+	 * The subCommands will always be set to null.
+	 * @param requiredParameters parameters expected by inputted command for proper execution, excluding the command name itself. Set to null to exclude
+	 * @param optionalParameters parameters accepted by inputted command for execution
+	 * @return True if valid, false if not
+	 */
+	public boolean validateParameterLength(String[] requiredParameters, String... optionalParameters) {
+		return validateParameterLength(
+				(String[]) null,
+				requiredParameters,
+				optionalParameters);
+	}
+
+	/**
+	 * Validate that the number or args matches the requested length.
+	 * If arg length is not met, then an error message is sent with the parameters demanded.
+	 * If the first character in a parameter is the '\b' backspace escape character, then it is omitted and the
+	 * whitespace character immediately proceeding it is removed.<br/>
+	 * E.g. an optionalParameters array looking like: ["name", "gender, "\bage"] would look like: <br/>
+	 * [name] [gender][age]
+	 * @param subCommand The first parameter expected by the inputted command, must be typed exactly as read. Set to null to exclude
+	 * @param requiredParameters parameters expected by inputted command for proper execution, excluding the command name itself. Set to null to exclude
+	 * @param optionalParameters parameters accepted by inputted command for execution
+	 * @return True if valid, false if not
+	 */
+	public boolean validateParameterLength(String subCommand, String[] requiredParameters, String... optionalParameters) {
+		return validateParameterLength(
+				subCommand == null ? null : new String[] {subCommand},
+				requiredParameters,
+				optionalParameters);
+	}
+
 	 /**
 	  * Validate that the number or args matches the requested length.
 	  * If arg length is not met, then an error message is sent with the parameters demanded.
@@ -76,35 +114,60 @@ public class CommandParser {
 	  * whitespace character immediately proceeding it is removed.<br/>
 	  * E.g. an optionalParameters array looking like: ["name", "gender, "\bage"] would look like: <br/>
 	  * [name] [gender][age]
-	  * @param requiredParameters parameters expected by inputed command for proper execution, excluding the command name itself
-	  * @param optionalParameters parameters accepted by inputed command for execution
+	  * @param subCommands parameters expected by the inputted command, must be typed exactly as read. Set to null to exclude
+	  * @param requiredParameters parameters expected by inputted command for proper execution, excluding the command name itself. Set to null to exclude
+	  * @param optionalParameters parameters accepted by inputted command for execution
 	  * @return True if valid, false if not
 	  */
-	public boolean validateParameterLength(String[] requiredParameters, String... optionalParameters) {
+	 public boolean validateParameterLength(String[] subCommands, String[] requiredParameters, String... optionalParameters) {
 		boolean result = false;
-		if (args.length > requiredParameters.length) {
+
+		boolean hasSubCommands = subCommands != null;
+		boolean hasRequiredParams = requiredParameters != null;
+		int requiredLength = (hasSubCommands ? subCommands.length : 0) + (hasRequiredParams ? requiredParameters.length : 0);
+		if (args.length > requiredLength) {
 			//More args than parameters (i.e. correct number of parameters following command name)
 			result = true; //Happy path
 
-			for (String arg : requiredParameters) {
-				if (Util.isEmptyString(arg)) {
-					result = false; //Whoops, unhappy path found again
-					break;
+			if (hasSubCommands && result) {
+				for (String subCommand : subCommands) {
+					if (Util.isEmptyString(subCommand)) {
+						result = false; //Whoops, unhappy path found again
+						break;
+					}
+				}
+			}
+
+			// Repeat check for subcommands
+			if (hasRequiredParams && result) {
+				for (String arg : requiredParameters) {
+					if (Util.isEmptyString(arg)) {
+						result = false; //Whoops, unhappy path found again
+						break;
+					}
 				}
 			}
 		}
 
-		lastUsageMessage = buildUsageErrorMessage(requiredParameters, optionalParameters);
+		lastUsageMessage = buildUsageErrorMessage(subCommands, requiredParameters, optionalParameters);
 		if (!result) {
 			sendUserError(lastUsageMessage);
 		}
 		return result;
 	}
 
-	private String buildUsageErrorMessage(String[] requiredParameters, String[] optionalParameters) {
+	private String buildUsageErrorMessage(String[] subCommands, String[] requiredParameters, String[] optionalParameters) {
 		StringBuilder errorMessage = new StringBuilder("Usage: ").append(MessageListener.COMMAND_PREFIX).append(args[0]);
-		for (String reqParam : requiredParameters) {
-			errorMessage.append(formatParameter(reqParam, '<', '>'));
+		if (subCommands != null) {
+			for (String subCommand : subCommands) {
+				errorMessage.append(" " + subCommand);
+			}
+		}
+
+		if (requiredParameters != null) {
+			for (String reqParam : requiredParameters) {
+				errorMessage.append(formatParameter(reqParam, '<', '>'));
+			}
 		}
 
 		for (String opParam: optionalParameters) {
