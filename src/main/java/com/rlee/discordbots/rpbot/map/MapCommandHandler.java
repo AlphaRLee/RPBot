@@ -295,7 +295,7 @@ public class MapCommandHandler {
 			return;
 		}
 
-		RPMap map = getTargetMap(args, );
+		RPMap map = getTargetMap(args, 2);
 		if (map == null) {
 			return;
 		}

@@ -71,6 +71,10 @@ class MapLegendPrinter {
 		StringJoiner sj = new StringJoiner("\n");
 		sj.add("__**" + mapName + "** Legend__:");
 
+		if (entitiesBySymbols.isEmpty()) {
+			sj.add("(No entites found on the map)");
+		}
+
 		String entryLegend;
 		for (Map.Entry<Character, RPMapEntityList> entry : entitiesBySymbols.entrySet()) {
 			if (entry.getKey() == null || Util.isEmptyCollection(entry.getValue())) {
