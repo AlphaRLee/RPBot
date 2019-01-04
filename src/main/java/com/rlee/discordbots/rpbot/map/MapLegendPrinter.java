@@ -72,7 +72,7 @@ class MapLegendPrinter {
 		sj.add("__**" + mapName + "** Legend__:");
 
 		if (entitiesBySymbols.isEmpty()) {
-			sj.add("(No entites found on the map)");
+			sj.add("(No entities found on the map)");
 		}
 
 		String entryLegend;
