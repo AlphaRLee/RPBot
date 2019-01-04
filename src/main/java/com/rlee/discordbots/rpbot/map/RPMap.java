@@ -4,6 +4,8 @@ import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import net.dv8tion.jda.core.entities.Message;
 
+import javax.naming.NameAlreadyBoundException;
+
 /**
  * A 2D visual text map
  * @author RLee
@@ -41,20 +43,26 @@ public class RPMap {
 		this.sourceMessage = sourceMessage;
 	}
 
+	public RPMapEntity<?> getEntity(String name) {
+		return mapEntityRegistry.getEntity(name);
+	}
+
 	/**
-	 * Set a new entity at the given coordinates. Will overwrite any existing entity at the coordinates
+	 * Add a new entity at the given coordinates.
+	 * Always allows for auto-renaming
 	 * @param rowIndex The row to set the entity at
 	 * @param colIndex The column to set the entity at
 	 * @param symbol A single char representation of the entity to insert
 	 * @param entity The entity to insert in the map
 	 * @param <E> The class of the entity
+	 * @throws NameAlreadyBoundException Thrown if renaming is not allowed and the name is already taken.
 	 */
-	public <E> void setEntity(int rowIndex, int colIndex, char symbol, E entity) {
-		mapEntityRegistry.setEntity(new RPCoordinate(rowIndex, colIndex), symbol, entity);
+	public <E> String addEntity(int rowIndex, int colIndex, char symbol, E entity) throws NameAlreadyBoundException {
+		return addEntity(new RPCoordinate(rowIndex, colIndex), symbol, entity, true);
 	}
 
-	public <E> void setEntity(RPCoordinate coordinate, char symbol, E entity) {
-		mapEntityRegistry.setEntity(coordinate, symbol, entity);
+	public <E> String addEntity(RPCoordinate coordinate, char symbol, E entity, boolean allowAutoRename) throws NameAlreadyBoundException {
+		return mapEntityRegistry.addEntity(coordinate, new RPMapEntity<E>(symbol, entity, coordinate), allowAutoRename);
 	}
 
 	/**

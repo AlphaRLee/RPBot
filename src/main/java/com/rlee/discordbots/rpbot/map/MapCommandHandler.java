@@ -10,6 +10,8 @@ import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
 
+import javax.naming.NameAlreadyBoundException;
+
 public class MapCommandHandler {
 
 	private RPGame game;
@@ -22,12 +24,13 @@ public class MapCommandHandler {
 	public void handleCommand(String[] args, Member sender, RPGame game, MessageChannel channel) {
 		setup(args, sender, game, channel);
 
-		cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
-				+  "\tshow, move, add, legend, list, new, delete");
+		String errorDescription = "Type one of the following for the subcommand:\n"
+				+  "\tshow, move, add, legend, listmaps, newmap, deletemap";
+		cmdParser.setErrorDescription(errorDescription);
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
 		}
-		cmdParser.setErrorDescription(null);
+		cmdParser.setErrorDescription(null); // Wipe out the error description so that the subcommand can set it cleanly
 
 		String subCommand = args[1].toLowerCase();
 		switch (subCommand) {
@@ -43,15 +46,14 @@ public class MapCommandHandler {
 			case "legend":
 				legendCmd(args);
 				break;
-			case "list":
+			case "listmaps": case "list":
 				break;
-			case "new":
+			case "newmap": case "new":
 				break;
-			case "delete":
+			case "deletemap": case "delete":
 				break;
 			case "help": default:
-				cmdParser.setErrorDescription("Type one of the following for the subcommand:\n"
-						+  "\tshow, move, add, legend, list, new, delete");
+				cmdParser.setErrorDescription(errorDescription);
 				cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 				break;
 		}
@@ -141,22 +143,26 @@ public class MapCommandHandler {
 
 		//FIXME Remove test sample
 		if (mapRegistry.getActiveMap() == null) {
-			RPMap rpMap = new RPMap("Test");
-			rpMap.setEntity(-1, -2, 'b', "Brontosaurus");
-			rpMap.setEntity(2, 3, 'c', "Camel");
-			rpMap.setEntity(2, 4, 'd', "Dino");
-			rpMap.setEntity(1, 5, 'e', "Elephant");
-			rpMap.setEntity(1, 6, 'f', "Fish");
-			rpMap.setEntity(1, 2, '/', "Wall");
-			rpMap.setEntity(7, 4, '\u2588', "Wall");
-			rpMap.setEntity(6, 4, '\u2588', "Wall");
-			rpMap.setEntity(6, 5, '\u2588', "Wall");
+				RPMap rpMap = new RPMap("Test");
+			try {
+				rpMap.addEntity(-1, -2, 'b', "Brontosaurus");
+				rpMap.addEntity(2, 3, 'c', "Camel");
+				rpMap.addEntity(2, 4, 'd', "Dino");
+				rpMap.addEntity(1, 5, 'e', "Elephant");
+				rpMap.addEntity(1, 6, 'f', "Fish");
+				rpMap.addEntity(1, 2, '/', "Wall");
+				rpMap.addEntity(7, 4, '\u2588', "Wall");
+				rpMap.addEntity(6, 4, '\u2588', "Wall");
+				rpMap.addEntity(6, 5, '\u2588', "Wall");
 
-			rpMap.setEntity(0, 0, 'z', "Zebra");
-			rpMap.setEntity(0, 7, 'y', "Yak");
-			rpMap.setEntity(7, 0, 'x', "Xerus");
-			rpMap.setEntity(7, 1, 'w', "Walrus");
-			rpMap.setEntity(7, 7, 'u', "Unicorn");
+				rpMap.addEntity(0, 0, 'z', "Zebra");
+				rpMap.addEntity(0, 7, 'y', "Yak");
+				rpMap.addEntity(7, 0, 'x', "Xerus");
+				rpMap.addEntity(7, 1, 'w', "Walrus");
+				rpMap.addEntity(7, 7, 'u', "Unicorn");
+			} catch (NameAlreadyBoundException e) {
+				e.printStackTrace();
+			}
 			mapRegistry.addMap(rpMap);
 			mapRegistry.setActiveMap(rpMap);
 		}
@@ -179,10 +185,27 @@ public class MapCommandHandler {
 			return;
 		}
 
-		RPCoordinate rc = parseCoordinates(args[3]);
+		RPCoordinate coord = parseCoordinates(args[3]);
+		String inputName = args[2];
+		String outputName = null;
+		try {
+			// TODO Parse out the "character" input
+			// TODO add configurability for the autorename feature
+			outputName = map.addEntity(coord, args[2].charAt(0), inputName, true);
+		} catch (NameAlreadyBoundException e) {
+			cmdParser.setErrorDescription(e.getMessage());
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
+			return;
+		}
 
-		//TODO Parse out the "character" input
-		map.setEntity(rc, args[2].charAt(0), args[2]);
+		RPMapEntity<?> outputEntity = map.getEntity(outputName);
+		String outputMessage = "**" + outputName + "** [`" + outputEntity.getSymbol() + "`] has been added at **" + outputEntity.getCoordinate() + "**.";
+
+		if (!outputName.equals(inputName)) {
+			outputMessage += "\n**" + inputName + "** has been renamed to **" + outputName + "** because another entity already has the requested name.";
+		}
+
+		channel.sendMessage(outputMessage).queue();
 	}
 
 	private void moveCmd(String args[]) {

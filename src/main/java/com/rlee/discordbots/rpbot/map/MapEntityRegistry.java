@@ -4,6 +4,7 @@ import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import com.rlee.discordbots.rpbot.regitstry.Registry;
 
+import javax.naming.NameAlreadyBoundException;
 import java.util.*;
 
 class MapEntityRegistry implements Registry {
@@ -55,48 +56,24 @@ class MapEntityRegistry implements Registry {
 	 * @param name The name of the entity. Case insensitive
 	 * @return The entity. Always return first inserted in case of name conflict
 	 */
-	Object getEntity(String name) {
-		return entitiesByName.get(name.toLowerCase()).getEntity();
+	RPMapEntity<?> getEntity(String name) {
+		return entitiesByName.get(name.toLowerCase());
 	}
 
 	/**
-	 * Set a new entity at the given coordinates. Will overwrite any existing entity at the coordinates
-	 * @param rowIndex The row to set the entity at
-	 * @param colIndex The column to set the entity at
-	 * @param symbol A single char representation of the entity to insert
-	 * @param entity The entity to insert in the map
-	 * @param <E> The class of the entity
-	 */
-	<E> void setEntity(int rowIndex, int colIndex, char symbol, E entity) {
-		setEntity(new RPCoordinate(rowIndex, colIndex), symbol, entity);
-	}
-
-	<E> void setEntity(RPCoordinate coordinate, char symbol, E entity) {
-		setEntity(coordinate, new RPMapEntity<E>(symbol, entity, coordinate));
-	}
-
-	/**
-	 *
-	 * @param coordinate
-	 * @param mapEntity
-	 */
-	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity) {
-		setEntity(coordinate, mapEntity, true);
-	}
-
-	/**
-	 * Set an entity at the given coordinate
+	 * Add an entity at the given coordinate
 	 * @param coordinate
 	 * @param mapEntity
 	 * @param allowAutoRename If true, then any name collisions will be resolved by adding a unique name, if false then the entity is not added in the case of a name collision
+	 * @return The name of the entity (which can potentially be re-named)
+	 * @throws NameAlreadyBoundException Thrown if renaming is not allowed and the name is already taken.
 	 */
-	void setEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity, boolean allowAutoRename) {
-		if (!checkAndAddEntityByName(mapEntity, allowAutoRename)) {
-			return; // TODO add an error message about unique name failure
-		}
-
+	String addEntity(RPCoordinate coordinate, RPMapEntity<?> mapEntity, boolean allowAutoRename) throws NameAlreadyBoundException {
+		String outputName = addEntityByName(mapEntity, allowAutoRename);
 		addEntityToMappedList(entitiesByCoordinate, mapEntity.getCoordinate(), mapEntity, true);
 		addEntityToMappedList(entitiesBySymbol, mapEntity.getSymbol(), mapEntity);
+
+		return outputName;
 	}
 
 	/**
@@ -137,28 +114,29 @@ class MapEntityRegistry implements Registry {
 	 * If the given entity's symbol is already listed, then do nothing.
 	 * If the entity is not listed, then add the entry to the lookup.
 	 * @param entity
-	 * @return True if the entity's name is unique and successfully added, false if the name is not unique (and therefore not added)
+	 * @return The name of the entity (which can potentially be re-named)
+	 * @throws NameAlreadyBoundException Thrown if renaming is not allowed and the name is already taken.
 	 */
-	private boolean checkAndAddEntityByName(RPMapEntity<?> entity, boolean allowAutoRename) {
+	private String addEntityByName(RPMapEntity<?> entity, boolean allowAutoRename) throws NameAlreadyBoundException {
 		// Allow only unique entries for names
 		String name = entity.getName().toLowerCase();
 		if (entitiesByName.containsKey(name)) {
 			if (allowAutoRename) {
 				String entityRename = getUniqueEntityName(entity.getName());
 				if (entityRename == null) {
-					return false; // TODO throw exception here
+					throw new NameAlreadyBoundException("The maximum number of entities with the name " + name + " already exists.");
 				}
 
 				entity.setName(entityRename);
 				entitiesByName.put(entityRename.toLowerCase(), entity);
 			} else {
-				return false;
+				throw new NameAlreadyBoundException("The name " + name + " is already bound to another entity.");
 			}
 		} else {
 			entitiesByName.put(name, entity);
 		}
 
-		return true;
+		return entity.getName();
 	}
 
 	/**

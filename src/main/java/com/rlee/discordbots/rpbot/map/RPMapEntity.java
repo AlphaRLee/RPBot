@@ -1,20 +1,43 @@
 package com.rlee.discordbots.rpbot.map;
 
 class RPMapEntity <E> {
-	private char symbol;
-	private String name;
 	private E entity;
 
+	private char symbol;
+	private String name;
 	private RPCoordinate coordinate;
 
+	private boolean suppressedOutput; // TODO Consume this flag somewhere
+
+	/**
+	 * Create a new RPMapEntity.
+	 * The suppressedOutput flag is always set to false.
+	 * @param symbol
+	 * @param entity
+	 * @param coordinate
+	 */
 	RPMapEntity(char symbol, E entity, RPCoordinate coordinate) {
+		this(symbol, entity, coordinate, false);
+	}
+
+	/**
+	 * Create a new RPMapEntity
+	 * @param symbol
+	 * @param entity
+	 * @param coordinate
+	 * @param suppressedOutput Set to true to suppress output for batch messages, such as the legend of the RPMap
+	 */
+	RPMapEntity(char symbol, E entity, RPCoordinate coordinate, boolean suppressedOutput) {
+		this.entity = entity;
+
 		this.symbol = symbol;	//TODO Add support for 2D shape instead of single char
 								//TODO Add support for entity larger than 1 cell
-		this.entity = entity;
 		this.name = entity.toString();
 		this.coordinate = coordinate;
+
+		this.suppressedOutput = suppressedOutput;
 	}
-	
+
 	char getSymbol() {
 		return symbol;
 	}
@@ -43,19 +66,11 @@ class RPMapEntity <E> {
 		this.coordinate = coordinate;
 	}
 
-	/**
-	 * <p>Get a legend on what this map entity represents.
-	 * Returns a string with the output</p>
-	 * <p>symbol: entity</p>
-	 * <p>where symbol is the symbol representing this entity
-	 * and entity represents {@link #getEntity()} with the {@link #toString()} method invoked
-	 * @return The string representation of this entity in a legend or null if entity is set to null
-	 */
-	String getLegend() {
-		if (entity == null) {
-			return null;
-		}
-		
-		return symbol + ": " + name;
+	boolean isSuppressedOutput() {
+		return suppressedOutput;
+	}
+
+	void setSuppressedOutput(boolean suppressedOutput) {
+		this.suppressedOutput = suppressedOutput;
 	}
 }
