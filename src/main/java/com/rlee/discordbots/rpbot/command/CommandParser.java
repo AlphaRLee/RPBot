@@ -25,6 +25,14 @@ public class CommandParser {
 		errorDescription = null;
 	}
 
+	public String[] getArgs() {
+		return args;
+	}
+
+	public void setArgs(String[] args) {
+		this.args = args;
+	}
+
 	public String getLastUsageMessage() {
 		return lastUsageMessage;
 	}

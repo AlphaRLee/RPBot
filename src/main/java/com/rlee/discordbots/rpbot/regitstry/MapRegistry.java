@@ -4,6 +4,7 @@ import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.map.RPMap;
 
+import javax.naming.NameAlreadyBoundException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class MapRegistry implements Registry {
 	 * @param rpMap The map to add. Must have a name.
 	 * @throws IllegalArgumentException Thrown if the map has no name or map is null.
 	 */
-	public void addMap(RPMap rpMap) throws IllegalArgumentException {
+	public void addMap(RPMap rpMap) throws IllegalArgumentException, NameAlreadyBoundException {
 		if (rpMap == null) {
 			throw new IllegalArgumentException("RPMap must not be null.");
 		}
@@ -48,7 +49,12 @@ public class MapRegistry implements Registry {
 			throw new IllegalArgumentException("RPMap must have a name.");
 		}
 
-		rpMaps.put(rpMap.getName().toLowerCase(), rpMap);
+		String lowercaseName = rpMap.getName().toLowerCase();
+		if (rpMaps.containsKey(lowercaseName)) {
+			throw new NameAlreadyBoundException("The name " + rpMap.getName() + " is already bound to another RPMap.");
+		}
+
+		rpMaps.put(lowercaseName, rpMap);
 	}
 
 	/**

@@ -26,7 +26,7 @@ public class MapCommandHandler {
 		setup(args, sender, game, channel);
 
 		String errorDescription = "Type one of the following for the subcommand:\n"
-				+  "\nshow, legend,\nadd, remove, move,\nusingmap, listmaps, usemap,\nnewmap, deletemap";
+				+  "\nshow, legend,\nadd, remove, move, setsymbol,\nusingmap, listmaps, usemap,\nnewmap, deletemap,\ndemo";
 		cmdParser.setErrorDescription(errorDescription);
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
@@ -47,6 +47,9 @@ public class MapCommandHandler {
 			case "remove":
 				removeFromMapCmd(args);
 				break;
+			case "setsymbol": case "symbol": case "ss":
+				setEntitySymbolCmd(args);
+				break;
 			case "move":
 				moveCmd(args);
 				break;
@@ -63,8 +66,13 @@ public class MapCommandHandler {
 				useMapCmd(args);
 				break;
 			case "newmap": case "new": case "addmap":
+				newMapCmd(args);
 				break;
 			case "deletemap": case "delete": case "delmap":
+				deleteMapCmd(args);
+				break;
+			case "demo":
+				demoCmd(args);
 				break;
 			case "help": default:
 				cmdParser.setErrorDescription(errorDescription);
@@ -163,32 +171,6 @@ public class MapCommandHandler {
 				+ "[map_name]: The map to show. Defaults to active map.");
 		if (!cmdParser.validateParameterLength("show", null, "map_name")) {
 			return;
-		}
-
-		//FIXME Remove test sample
-		if (mapRegistry.getActiveMap() == null) {
-				RPMap rpMap = new RPMap("Test");
-			try {
-				rpMap.addEntity(-1, -2, 'b', "Brontosaurus");
-				rpMap.addEntity(2, 3, 'c', "Camel");
-				rpMap.addEntity(2, 4, 'd', "Dino");
-				rpMap.addEntity(1, 5, 'e', "Elephant");
-				rpMap.addEntity(1, 6, 'f', "Fish");
-				rpMap.addEntity(1, 2, '/', "Wall");
-				rpMap.addEntity(7, 4, '\u2588', "Wall");
-				rpMap.addEntity(6, 4, '\u2588', "Wall");
-				rpMap.addEntity(6, 5, '\u2588', "Wall");
-
-				rpMap.addEntity(0, 0, 'z', "Zebra");
-				rpMap.addEntity(0, 7, 'y', "Yak");
-				rpMap.addEntity(7, 0, 'x', "Xerus");
-				rpMap.addEntity(7, 1, 'w', "Walrus");
-				rpMap.addEntity(7, 7, 'u', "Unicorn");
-			} catch (NameAlreadyBoundException e) {
-				e.printStackTrace();
-			}
-			mapRegistry.addMap(rpMap);
-			mapRegistry.setActiveMap(rpMap);
 		}
 
 		RPMap map = getTargetMap(args, 2);
@@ -303,6 +285,27 @@ public class MapCommandHandler {
 		channel.sendMessage("**" + mapEntity.getName() + "** was moved from **" + oldCoordinate + "** to **" + mapEntity.getCoordinate() + "**.").queue();
 	}
 
+	private void setEntitySymbolCmd(String[] args) {
+		cmdParser.setErrorDescription("Set the symbol of an entity.\nCan specify character symbol, starting coordinate, or entity name.");
+		if (!cmdParser.validateParameterLength("setsymbol", new String[] {"symbol | coordinate | entity", "symbol"}, "map_name")) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 4);
+		if (map == null) {
+			return;
+		}
+
+		RPMapEntity<?> mapEntity = parseMapEntity(map, args[2]);
+		if (mapEntity == null) {
+			return;
+		}
+
+		char oldSymbol = mapEntity.getSymbol();
+		map.setEntitySymbol(mapEntity, args[3].charAt(0));
+		channel.sendMessage("Entity " + mapEntity.getName() + " changed symbols from `" + oldSymbol + "` to `" + mapEntity.getSymbol() + "` at " + mapEntity.getCoordinate() + ".").queue();
+	}
+
 	/**
 	 * Clears all entities from a map.
 	 * @param args
@@ -357,7 +360,7 @@ public class MapCommandHandler {
 
 	private void useMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Set the active map to use.\n" + getActiveMapMessage());
-		if (!cmdParser.validateParameterLength("usemaps", new String[] {"map_name"})) {
+		if (!cmdParser.validateParameterLength("usemap", new String[] {"map_name"})) {
 			return;
 		}
 
@@ -368,5 +371,119 @@ public class MapCommandHandler {
 
 		mapRegistry.setActiveMap(map);
 		channel.sendMessage("Now using **" + map.getName() + "** as the active map.\nUse `" + MessageListener.COMMAND_PREFIX + "map show` to display the map.").queue();
+	}
+
+	private void newMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Create a new map.");
+		if (!cmdParser.validateParameterLength("newmap", new String[] {"map_name"})) {
+			return;
+		}
+
+		String mapName = args[2];
+		RPMap map = new RPMap(mapName);
+
+		try {
+			mapRegistry.addMap(map);
+		} catch (NameAlreadyBoundException e) {
+			cmdParser.setErrorDescription("The name **" + mapName + "** is already taken by another map." +
+					"\nUse that map with `" + MessageListener.COMMAND_PREFIX + "map usemap " + mapName + "`" +
+					"\nOr delete that map first with `" + MessageListener.COMMAND_PREFIX + "map deletemap " + mapName + "`.");
+			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
+			return;
+		}
+
+		channel.sendMessage("Map **" + map.getName() + "** has been created." +
+				"\nUse the map with `" + MessageListener.COMMAND_PREFIX + "map usemap " + map.getName() + "`.").queue();
+	}
+
+	private void deleteMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Delete a map.");
+		if (!cmdParser.validateParameterLength("deletemap", new String[] {"map_name"})) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 2);
+		if (map == null) {
+			return;
+		}
+
+		map.clearEntities();
+		mapRegistry.removeMap(map);
+		mapRegistry.setActiveMap(null);
+
+		channel.sendMessage("Map **" + map.getName() + "** has been deleted.\n" +
+				"Select a new map with `" + MessageListener.COMMAND_PREFIX + "map usemap`").queue();
+	}
+
+	private boolean hasDemoRan = false;
+	private void demoCmd(String args[]) {
+		String[] originalArgs = cmdParser.getArgs();
+		String[] cmdArgs;
+
+		cmdParser.setErrorDescription("Demo for creating and using a demo map.");
+		if (!cmdParser.validateParameterLength("demo", null)) {
+			return;
+		}
+
+		if (!mapRegistry.containsName("DemoMap")) {
+			String newMapCmdMsg = MessageListener.COMMAND_PREFIX + "map newmap DemoMap";
+			String[] newMapCmdArgs = newMapCmdMsg.split(" ");
+			channel.sendMessage("Creating a new demo map with: `" + newMapCmdMsg + "`").queue();
+			cmdParser.setArgs(newMapCmdArgs);
+			newMapCmd(newMapCmdArgs);
+		}
+
+		String useMapCmdMsg = MessageListener.COMMAND_PREFIX + "map usemap DemoMap";
+		cmdArgs = useMapCmdMsg.split(" ");
+		channel.sendMessage("Using the demo map with: `" + useMapCmdMsg + "`").queue();
+		cmdParser.setArgs(cmdArgs);
+		useMapCmd(cmdArgs);
+
+		RPMap rpMap = mapRegistry.getActiveMap();
+
+		if (!hasDemoRan) {
+			String addToMapCmdMessage = MessageListener.COMMAND_PREFIX + "map add Camel C2";
+			cmdArgs = addToMapCmdMessage.split(" ");
+			channel.sendMessage("Adding entity to demo map with: `" + addToMapCmdMessage + "`").queue();
+			cmdParser.setArgs(cmdArgs);
+			addToMapCmd(cmdArgs);
+
+			channel.sendMessage("Adding more entities to demo map...").queue();
+
+			try {
+				rpMap.addEntity(-1, -2, 'B', "Brontosaurus");
+//				rpMap.addEntity(2, 3, 'C', "Camel");
+				rpMap.addEntity(2, 4, 'D', "Dino");
+				rpMap.addEntity(1, 5, 'E', "Elephant");
+				rpMap.addEntity(1, 6, 'F', "Fish");
+				rpMap.addEntity(1, 2, '/', "Wall");
+				rpMap.addEntity(7, 4, '\u2588', "Wall");
+				rpMap.addEntity(6, 4, '\u2588', "Wall");
+				rpMap.addEntity(6, 5, '\u2588', "Wall");
+
+				rpMap.addEntity(0, 0, 'Z', "Zebra");
+				rpMap.addEntity(0, 7, 'Y', "Yak");
+				rpMap.addEntity(7, 0, 'X', "Xerus");
+				rpMap.addEntity(7, 1, 'W', "Walrus");
+				rpMap.addEntity(7, 7, 'U', "Unicorn");
+			} catch (NameAlreadyBoundException e) {
+				e.printStackTrace();
+			}
+		}
+
+		String showMapCmdMsg = MessageListener.COMMAND_PREFIX + "map show";
+		cmdArgs = showMapCmdMsg.split(" ");
+		channel.sendMessage("Showing the demo map with: `" + showMapCmdMsg + "`").queue();
+		cmdParser.setArgs(cmdArgs);
+		showMapCmd(cmdArgs);
+
+		String legendCmdMsg = MessageListener.COMMAND_PREFIX + "map legend";
+		cmdArgs = showMapCmdMsg.split(" ");
+		channel.sendMessage("Finishing demo by showing legend with: `" + legendCmdMsg + "`").queue();
+		cmdParser.setArgs(cmdArgs);
+		legendCmd(cmdArgs);
+
+		cmdParser.setArgs(originalArgs);
+		hasDemoRan = true;
 	}
 }

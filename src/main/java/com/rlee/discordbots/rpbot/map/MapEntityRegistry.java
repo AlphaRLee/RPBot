@@ -169,6 +169,17 @@ class MapEntityRegistry implements Registry {
 		return removeEntitySymbolResult || removeEntityCoordinateResult || removeEntityNameResult;
 	}
 
+	void setEntitySymbol(RPMapEntity<?> mapEntity, char symbol) {
+		RPMapEntityList entityList = getEntityList(mapEntity.getSymbol());
+		if (Util.isEmptyCollection(entityList)) {
+			return; // Shouldn't be possible
+		}
+
+		entityList.remove(mapEntity);
+		mapEntity.setSymbol(symbol);
+		addEntityToMappedList(entitiesBySymbol, symbol, mapEntity);
+	}
+
 	void clearEntities() {
 		entitiesBySymbol.clear();
 		entitiesByCoordinate.clear();

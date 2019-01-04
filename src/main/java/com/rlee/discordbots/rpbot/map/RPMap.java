@@ -69,6 +69,10 @@ public class RPMap {
 		return mapEntityRegistry.removeEntity(mapEntity);
 	}
 
+	public void setEntitySymbol(RPMapEntity<?> mapEntity, char symbol) {
+		mapEntityRegistry.setEntitySymbol(mapEntity, symbol);
+	}
+
 	public void clearEntities() {
 		mapEntityRegistry.clearEntities();
 	}
