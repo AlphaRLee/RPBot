@@ -25,7 +25,7 @@ public class MapCommandHandler {
 		setup(args, sender, game, channel);
 
 		String errorDescription = "Type one of the following for the subcommand:\n"
-				+  "\tshow, move, add, legend, listmaps, newmap, deletemap";
+				+  "\tshow, legend, add, remove, move, listmaps, newmap, deletemap";
 		cmdParser.setErrorDescription(errorDescription);
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
@@ -37,14 +37,17 @@ public class MapCommandHandler {
 			case "show":
 				showMapCmd(args);
 				break;
-			case "move":
-				moveCmd(args);
+			case "legend":
+				legendCmd(args);
 				break;
 			case "add":
 				addToMapCmd(args);
 				break;
-			case "legend":
-				legendCmd(args);
+			case "remove":
+				removeFromMapCmd(args);
+				break;
+			case "move":
+				moveCmd(args);
 				break;
 			case "listmaps": case "list":
 				break;
@@ -175,7 +178,7 @@ public class MapCommandHandler {
 		channel.sendMessage(map.showMap(0, 0)).queue();
 	}
 
-	private void addToMapCmd(String args[]) {
+	private void addToMapCmd(String[] args) {
 		if (!cmdParser.validateParameterLength("add", new String[] {"entity", "coordinate"}, "map_name")) {
 			return;
 		}
@@ -208,8 +211,32 @@ public class MapCommandHandler {
 		channel.sendMessage(outputMessage).queue();
 	}
 
-	private void moveCmd(String args[]) {
-		cmdParser.setErrorDescription("Move an entity on the map to the provided coordinate.\nCan specify character symbol, starting coordinate, or entity.");
+	private void removeFromMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Remove an entity from the map.\nCan specify character symbol, coordinate, or entity name.");
+		if (!cmdParser.validateParameterLength("remove", new String[] {"symbol | coordinate | entity"})) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 3); // TODO Add support for choosing map
+		if (map == null) {
+			return;
+		}
+
+		RPMapEntity<?> mapEntity = parseMapEntity(map, args[2]);
+		if (mapEntity == null) {
+			return;
+		}
+
+		if (map.removeEntity(mapEntity)) {
+			channel.sendMessage("Entity **" + mapEntity.getName() + "** [`" + mapEntity.getSymbol() + "`] has been removed from the map " + map.getName() + " at **" + mapEntity.getCoordinate() + "**.").queue();
+		} else {
+			// Theoretically should never get here
+			channel.sendMessage("Entity **" + mapEntity.getName() + "** could not be removed. Please contact a developer.").queue();
+		}
+	}
+
+	private void moveCmd(String[] args) {
+		cmdParser.setErrorDescription("Move an entity on the map to the provided coordinate.\nCan specify character symbol, starting coordinate, or entity name.");
 		if (!cmdParser.validateParameterLength("move", new String[] {"symbol | source_coordinate | entity", "destination_coordinate"}, "map_name")) {
 			return;
 		}

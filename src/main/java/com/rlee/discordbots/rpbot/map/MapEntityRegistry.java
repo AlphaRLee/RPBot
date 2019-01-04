@@ -140,6 +140,30 @@ class MapEntityRegistry implements Registry {
 	}
 
 	/**
+	 * Remove an entity from the RPMap.
+	 * @param mapEntity
+	 * @return True if the entity was successfully removed, false if not (e.g. Entity does not exist)
+	 */
+	boolean removeEntity(RPMapEntity<?> mapEntity) {
+		boolean removeEntitySymbolResult = false;
+		RPMapEntityList entityListBySymbol = getEntityList(mapEntity.getSymbol());
+		if (!Util.isEmptyCollection(entityListBySymbol)) {
+			removeEntitySymbolResult = entityListBySymbol.remove(mapEntity);
+		}
+
+		boolean removeEntityCoordinateResult = false;
+		RPMapEntityList entityListAtCoordinate = getEntityList(mapEntity.getCoordinate());
+		if (!Util.isEmptyCollection(entityListAtCoordinate)) {
+			removeEntityCoordinateResult = entityListAtCoordinate.remove(mapEntity);
+		}
+
+		RPMapEntity<?> removedEntity = entitiesByName.remove(mapEntity.getName().toLowerCase());
+		boolean removeEntityNameResult = (removedEntity != null);
+
+		return removeEntitySymbolResult || removeEntityCoordinateResult || removeEntityNameResult;
+	}
+
+	/**
 	 * Get a unique name based on the given entity name
 	 * @param entityNameSeed The entity name to build a unique name from
 	 * @return The unique name or null if no valid unique name could be found

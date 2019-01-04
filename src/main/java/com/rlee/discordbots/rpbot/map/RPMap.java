@@ -65,6 +65,10 @@ public class RPMap {
 		return mapEntityRegistry.addEntity(coordinate, new RPMapEntity<E>(symbol, entity, coordinate), allowAutoRename);
 	}
 
+	public boolean removeEntity(RPMapEntity<?> mapEntity) {
+		return mapEntityRegistry.removeEntity(mapEntity);
+	}
+
 	/**
 	 * Get the entity map as a string starting with the top left corner at (0, 0)
 	 * @return
