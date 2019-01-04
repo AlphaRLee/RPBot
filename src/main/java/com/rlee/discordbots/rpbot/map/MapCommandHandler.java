@@ -26,7 +26,7 @@ public class MapCommandHandler {
 		setup(args, sender, game, channel);
 
 		String errorDescription = "Type one of the following for the subcommand:\n"
-				+  "\tshow, legend, add, remove, move, listmaps, usemap, newmap, deletemap";
+				+  "\nshow, legend,\nadd, remove, move,\nusingmap, listmaps, usemap,\nnewmap, deletemap";
 		cmdParser.setErrorDescription(errorDescription);
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
@@ -56,11 +56,15 @@ public class MapCommandHandler {
 			case "listmaps": case "list":
 				listMapsCmd(args);
 				break;
+			case "usingmap": case "using":
+				usingMapCmd(args);
+				break;
 			case "usemap": case "use":
+				useMapCmd(args);
 				break;
-			case "newmap": case "new":
+			case "newmap": case "new": case "addmap":
 				break;
-			case "deletemap": case "delete":
+			case "deletemap": case "delete": case "delmap":
 				break;
 			case "help": default:
 				cmdParser.setErrorDescription(errorDescription);
@@ -144,6 +148,16 @@ public class MapCommandHandler {
 		}
 	}
 
+	private String getActiveMapMessage() {
+		RPMap activeMap = mapRegistry.getActiveMap();
+		String activeMapMessage = "No map selected. Select a map with `" + MessageListener.COMMAND_PREFIX + "map usemap`.";
+		if (activeMap != null) {
+			activeMapMessage = "Current active map: **" + activeMap.getName() + "**";
+		}
+
+		return activeMapMessage;
+	}
+
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
 				+ "[map_name]: The map to show. Defaults to active map.");
@@ -182,7 +196,7 @@ public class MapCommandHandler {
 			return;
 		}
 
-		channel.sendMessage(map.showMap(0, 0)).queue();
+		channel.sendMessage("__" + map.getName() + "__:\n" + map.showMap(0, 0)).queue();
 	}
 
 	private void legendCmd(String[] args) {
@@ -326,5 +340,33 @@ public class MapCommandHandler {
 		}
 
 		channel.sendMessage(sj.toString()).queue();
+	}
+
+	/**
+	 * Get a message telling which map the user currently has selected
+	 * @param args
+	 */
+	private void usingMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Get the map currently being used.");
+		if (!cmdParser.validateParameterLength("usingmap", null)) {
+			return;
+		}
+
+		channel.sendMessage(getActiveMapMessage()).queue();
+	}
+
+	private void useMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Set the active map to use.\n" + getActiveMapMessage());
+		if (!cmdParser.validateParameterLength("usemaps", new String[] {"map_name"})) {
+			return;
+		}
+
+		RPMap map = getTargetMap(args, 2);
+		if (map == null) {
+			return;
+		}
+
+		mapRegistry.setActiveMap(map);
+		channel.sendMessage("Now using **" + map.getName() + "** as the active map.\nUse `" + MessageListener.COMMAND_PREFIX + "map show` to display the map.").queue();
 	}
 }
