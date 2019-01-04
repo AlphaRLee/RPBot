@@ -11,6 +11,7 @@ import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 import javax.naming.NameAlreadyBoundException;
+import java.util.StringJoiner;
 
 public class MapCommandHandler {
 
@@ -25,7 +26,7 @@ public class MapCommandHandler {
 		setup(args, sender, game, channel);
 
 		String errorDescription = "Type one of the following for the subcommand:\n"
-				+  "\tshow, legend, add, remove, move, listmaps, newmap, deletemap";
+				+  "\tshow, legend, add, remove, move, listmaps, usemap, newmap, deletemap";
 		cmdParser.setErrorDescription(errorDescription);
 		if (!cmdParser.validateParameterLength(new String[] {"subcommand"})) {
 			return;
@@ -53,6 +54,9 @@ public class MapCommandHandler {
 				clearMapCmd(args);
 				break;
 			case "listmaps": case "list":
+				listMapsCmd(args);
+				break;
+			case "usemap": case "use":
 				break;
 			case "newmap": case "new":
 				break;
@@ -83,7 +87,7 @@ public class MapCommandHandler {
 
 		if (map == null) {
 			cmdParser.setErrorDescription("No map found" + errorExtension + "."
-					+ "\nTry using " + MessageListener.COMMAND_PREFIX + "map list");
+					+ "\nTry using `" + MessageListener.COMMAND_PREFIX + "map listmaps`");
 
 			cmdParser.sendUserError(cmdParser.getLastUsageMessage());
 		}
@@ -302,5 +306,25 @@ public class MapCommandHandler {
 
 		map.clearEntities();
 		channel.sendMessage("The map **" + map.getName() + "** has been cleared.").queue();
+	}
+
+	private void listMapsCmd(String[] args) {
+		cmdParser.setErrorDescription("List all maps available.");
+		if (!cmdParser.validateParameterLength("listmaps", null)) {
+			return;
+		}
+
+		StringJoiner sj = new StringJoiner("\n");
+		sj.add("__Maps__:");
+
+		if (mapRegistry.getMapNames().isEmpty()) {
+			sj.add("(No maps found. Create a map with `" + MessageListener.COMMAND_PREFIX + "map newmap`.)");
+		}
+
+		for (String mapName : mapRegistry.getMapNames()) {
+			sj.add(mapName);
+		}
+
+		channel.sendMessage(sj.toString()).queue();
 	}
 }

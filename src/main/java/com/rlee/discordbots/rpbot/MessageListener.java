@@ -26,9 +26,11 @@ public class MessageListener extends ListenerAdapter {
 
 	public static String COMMAND_PREFIX = "&";	//Official RPBot
 	private RollCalculator rollCalculator;
+	private MapCommandHandler mapCommandHandler;
 	
 	public MessageListener() {
 		rollCalculator = new RollCalculator();
+		mapCommandHandler = new MapCommandHandler();
 	}
 	
 	public MessageListener(String commandPrefix) {
@@ -132,7 +134,7 @@ public class MessageListener extends ListenerAdapter {
 		}	
 		case "list": {
 			if (game.getProfileRegistry().getProfilesByName().isEmpty()) {
-				channel.sendMessage("No characters have been added yet! Try using " + COMMAND_PREFIX + "addchar").queue();
+				channel.sendMessage("No characters have been added yet! Try using `" + COMMAND_PREFIX + "addchar`").queue();
 				break;
 			}
 			
@@ -349,7 +351,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "map": case "m": {
-			new MapCommandHandler().handleCommand(args, member, game, channel);
+			mapCommandHandler.handleCommand(args, member, game, channel);
 			break;
 		}
 		//TODO Delete these test cases
@@ -367,8 +369,8 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		if (lowerCommand.startsWith("addchar") || lowerCommand.startsWith("addcharacter")) {
-			if (args.length <= 1 || content.split("\n").length <= 1) {
-				channel.sendMessage("Format: " + COMMAND_PREFIX + args[0] + "\nName: <name>\n<attribute name>: <attribute value>\n...").queue();
+			if (args.length <= 1 || content.split("\n").length <= 1) { // TODO Convert to use the cmdParser
+				channel.sendMessage("Usage: `" + COMMAND_PREFIX + args[0] + "\nName: <name>\n<attribute_name>: <attribute_value>\n<attribute_name>: <attribute_value>\n...`").queue();
 				return;
 			}
 					
@@ -478,7 +480,8 @@ public class MessageListener extends ListenerAdapter {
 		CharProfile profile = game.getProfileRegistry().getProfile(member);
 
 		if (args.length < ATTR_ARG + 1) {
-			channel.sendMessage("Format: " + COMMAND_PREFIX + args[OPERATOR_ARG] + " <attribute> [duration] [character]").queue();
+			// TODO Refactor to use cmdParser
+			channel.sendMessage("Usage: `" + COMMAND_PREFIX + args[OPERATOR_ARG] + " <attribute> [duration] [character]`").queue();
 			return;
 		}
 		
@@ -552,7 +555,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		if (signCount >= operatorArgLength) {
 			//Entire string is just operator, no number
-			channel.sendMessage("Please add a number to the end of your operation! Eg. " + COMMAND_PREFIX + "+1").queue();
+			channel.sendMessage("Please add a number to the end of your operation! Eg. `" + COMMAND_PREFIX + "+1`").queue();
 			return;
 		}
 		

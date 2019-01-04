@@ -4,8 +4,10 @@ import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.map.RPMap;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class MapRegistry implements Registry {
 	private RPGame game;
@@ -23,6 +25,10 @@ public class MapRegistry implements Registry {
 
 	public RPGame getGame() {
 		return game;
+	}
+
+	public Set<String> getMapNames() {
+		return rpMaps.keySet();
 	}
 
 	public RPMap getMap(String name) {
