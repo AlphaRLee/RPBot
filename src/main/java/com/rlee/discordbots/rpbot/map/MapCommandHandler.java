@@ -49,6 +49,9 @@ public class MapCommandHandler {
 			case "move":
 				moveCmd(args);
 				break;
+			case "clear":
+				clearMapCmd(args);
+				break;
 			case "listmaps": case "list":
 				break;
 			case "newmap": case "new":
@@ -178,6 +181,27 @@ public class MapCommandHandler {
 		channel.sendMessage(map.showMap(0, 0)).queue();
 	}
 
+	private void legendCmd(String[] args) {
+		cmdParser.setErrorDescription("Show the map legend.");
+		if (!cmdParser.validateParameterLength("legend", null, "symbol | coordinate")) {
+			return;
+		}
+
+		RPMap map = mapRegistry.getActiveMap();
+		if (args.length > 2) {
+			// Show the legend entry for the particular arg (symbol or coordinate)
+			String legendOutput = getLegendForSelection(map, args[2]);
+			if (legendOutput == null) {
+				return;
+			}
+
+			channel.sendMessage(legendOutput).queue();
+		} else {
+			// Show all legend entries
+			channel.sendMessage(map.showLegendBySymbols()).queue(); // TODO Handle maps with >20 entities
+		}
+	}
+
 	private void addToMapCmd(String[] args) {
 		if (!cmdParser.validateParameterLength("add", new String[] {"entity", "coordinate"}, "map_name")) {
 			return;
@@ -261,24 +285,22 @@ public class MapCommandHandler {
 		channel.sendMessage("**" + mapEntity.getName() + "** was moved from **" + oldCoordinate + "** to **" + mapEntity.getCoordinate() + "**.").queue();
 	}
 
-	private void legendCmd(String[] args) {
-		cmdParser.setErrorDescription("Show the map legend.");
-		if (!cmdParser.validateParameterLength("legend", null, "symbol | coordinate")) {
+	/**
+	 * Clears all entities from a map.
+	 * @param args
+	 */
+	private void clearMapCmd(String[] args) {
+		cmdParser.setErrorDescription("Clear all entities from a map.");
+		if (!cmdParser.validateParameterLength("clear", null, "map_name")) {
 			return;
 		}
 
-		RPMap map = mapRegistry.getActiveMap();
-		if (args.length > 2) {
-			// Show the legend entry for the particular arg (symbol or coordinate)
-			String legendOutput = getLegendForSelection(map, args[2]);
-			if (legendOutput == null) {
-				return;
-			}
-
-			channel.sendMessage(legendOutput).queue();
-		} else {
-			// Show all legend entries
-			channel.sendMessage(map.showLegendBySymbols()).queue(); // TODO Handle maps with >20 entities
+		RPMap map = getTargetMap(args, );
+		if (map == null) {
+			return;
 		}
+
+		map.clearEntities();
+		channel.sendMessage("The map **" + map.getName() + "** has been cleared.").queue();
 	}
 }

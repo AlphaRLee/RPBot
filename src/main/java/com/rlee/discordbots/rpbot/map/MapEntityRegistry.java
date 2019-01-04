@@ -149,18 +149,30 @@ class MapEntityRegistry implements Registry {
 		RPMapEntityList entityListBySymbol = getEntityList(mapEntity.getSymbol());
 		if (!Util.isEmptyCollection(entityListBySymbol)) {
 			removeEntitySymbolResult = entityListBySymbol.remove(mapEntity);
+			if (entityListBySymbol.isEmpty()) {
+				entitiesBySymbol.remove(mapEntity.getSymbol());
+			}
 		}
 
 		boolean removeEntityCoordinateResult = false;
 		RPMapEntityList entityListAtCoordinate = getEntityList(mapEntity.getCoordinate());
 		if (!Util.isEmptyCollection(entityListAtCoordinate)) {
 			removeEntityCoordinateResult = entityListAtCoordinate.remove(mapEntity);
+			if (entityListAtCoordinate.isEmpty()) {
+				entitiesByCoordinate.remove(mapEntity.getSymbol()); // Clear empty lists for memory efficiency
+			}
 		}
 
 		RPMapEntity<?> removedEntity = entitiesByName.remove(mapEntity.getName().toLowerCase());
 		boolean removeEntityNameResult = (removedEntity != null);
 
 		return removeEntitySymbolResult || removeEntityCoordinateResult || removeEntityNameResult;
+	}
+
+	void clearEntities() {
+		entitiesBySymbol.clear();
+		entitiesByCoordinate.clear();
+		entitiesByName.clear();
 	}
 
 	/**

@@ -69,6 +69,10 @@ public class RPMap {
 		return mapEntityRegistry.removeEntity(mapEntity);
 	}
 
+	public void clearEntities() {
+		mapEntityRegistry.clearEntities();
+	}
+
 	/**
 	 * Get the entity map as a string starting with the top left corner at (0, 0)
 	 * @return
