@@ -3,6 +3,8 @@ package com.rlee.discordbots.rpbot.game;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
@@ -54,6 +56,7 @@ public class GameFileManager {
 	void loadConfig() {
 		// Presently only maps have config
 		try {
+			System.out.println("Now reading: " + configFilePath); // FIXME delete test code
 			game.getMapConfig().readMapConfigFromFile(configFilePath);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -94,7 +97,7 @@ public class GameFileManager {
 		File configFile = new File(configFilePath);
 		if (!configFile.exists()) {
 			try {
-				configFile.createNewFile(); // TODO Load a default config file in
+				Files.copy(new File("config/defaultGameConfig.yml").toPath(), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

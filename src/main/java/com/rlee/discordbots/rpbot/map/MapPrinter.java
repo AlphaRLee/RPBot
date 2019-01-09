@@ -3,13 +3,12 @@ package com.rlee.discordbots.rpbot.map;
 import com.rlee.discordbots.rpbot.Util;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 class MapPrinter {
 	private Iterator<Map.Entry<RPCoordinate, RPMapEntityList>> printableEntityIterator;
 	private Map.Entry<RPCoordinate, RPMapEntityList> nextPrintableEntityList;
 
-	private boolean showBorder = true;
+	private boolean showBorders = true;
 	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
 	private static final char colDividerChar = '|';
 	private static final char cornerDividerChar = '+';
@@ -114,7 +113,7 @@ class MapPrinter {
 		StringBuilder sb = new StringBuilder("```\n");
 		//NOTE Reverse iteration used to flip Y axis
 		for (int i = bottomRow + netRowCount - 1; i >= bottomRow; i--) {
-			if (showBorder) {
+			if (showBorders) {
 				sb.append(rowDivider).append("\n");
 			}
 
@@ -180,7 +179,7 @@ class MapPrinter {
 			coord.setCol(i);
 			sb.append(showEntityCell(coord));
 
-			if (showBorder) {
+			if (showBorders) {
 				sb.append(colDividerChar);
 			}
 		}
@@ -270,7 +269,7 @@ class MapPrinter {
 		for (int i = 0; i < maxCharWidth; i++) {
 			cellBuilder.append(lengthChar);
 		}
-		if (showBorder) {
+		if (showBorders) {
 			cellBuilder.append(endChar);
 		}
 		String blankRowUnit = cellBuilder.toString();
@@ -335,7 +334,7 @@ class MapPrinter {
 			for (int j = 0; j < netColCount; j++) {
 				sb.append(showColIndexCell(numericColIndices[j][i]));
 
-				if (showBorder) {
+				if (showBorders) {
 					sb.append(blankChar);
 				}
 			}

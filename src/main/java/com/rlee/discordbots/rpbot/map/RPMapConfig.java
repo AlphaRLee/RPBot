@@ -1,7 +1,6 @@
 package com.rlee.discordbots.rpbot.map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -79,12 +78,12 @@ public class RPMapConfig {
 
 		try {
 			ObjectNode mapNode = (ObjectNode) yamlMapper.readTree(configFile).get("map");
-//			JsonNode mapNode = root.get("map");
 
 			rowCount = yamlMapper.treeToValue(mapNode.get("rowCount"), Integer.class);
 			colCount = yamlMapper.treeToValue(mapNode.get("colCount"), Integer.class);
 			rowHeight = yamlMapper.treeToValue(mapNode.get("rowHeight"), Integer.class);
 			colWidth = yamlMapper.treeToValue(mapNode.get("colWidth"), Integer.class);
+			showBorders = yamlMapper.treeToValue(mapNode.get("showBorders"), Boolean.class);
 
 		} catch (JsonProcessingException e) {
 			// TODO Send message notifying user
