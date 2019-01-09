@@ -169,7 +169,7 @@ public class MapCommandHandler {
 	private void showMapCmd(String[] args) {
 		cmdParser.setErrorDescription("Show the map.\n"
 				+ "[map_name]: The map to show. Defaults to active map.");
-		if (!cmdParser.validateParameterLength("show", null, "map_name")) {
+		if (!cmdParser.validateParameterLength("show", null, "map_name", "bottom_left_coordinate")) {
 			return;
 		}
 
@@ -178,7 +178,16 @@ public class MapCommandHandler {
 			return;
 		}
 
-		channel.sendMessage("__" + map.getName() + "__:\n" + map.showMap(0, 0)).queue();
+		RPCoordinate bottomLeftCoordinate = new RPCoordinate(1, 1); // Default coordinate for bottom left
+		if (args.length > 3) {
+			bottomLeftCoordinate = parseCoordinates(args[3]);
+			if (bottomLeftCoordinate == null) {
+				return;
+			}
+		}
+
+		// TODO Allow customization on row/col count
+		channel.sendMessage("__" + map.getName() + "__:\n" + map.showMap(bottomLeftCoordinate)).queue();
 	}
 
 	private void legendCmd(String[] args) {
@@ -453,19 +462,19 @@ public class MapCommandHandler {
 			try {
 				rpMap.addEntity(-1, -2, 'B', "Brontosaurus");
 //				rpMap.addEntity(2, 3, 'C', "Camel");
-				rpMap.addEntity(2, 4, 'D', "Dino");
-				rpMap.addEntity(1, 5, 'E', "Elephant");
-				rpMap.addEntity(1, 6, 'F', "Fish");
+				rpMap.addEntity(3, 4, 'D', "Dino");
+				rpMap.addEntity(2, 5, 'E', "Elephant");
+				rpMap.addEntity(2, 6, 'F', "Fish");
 				rpMap.addEntity(1, 2, '/', "Wall");
-				rpMap.addEntity(7, 4, '\u2588', "Wall");
-				rpMap.addEntity(6, 4, '\u2588', "Wall");
-				rpMap.addEntity(6, 5, '\u2588', "Wall");
+				rpMap.addEntity(8, 5, '\u2588', "Wall");
+				rpMap.addEntity(7, 5, '\u2588', "Wall");
+				rpMap.addEntity(7, 6, '\u2588', "Wall");
 
-				rpMap.addEntity(0, 0, 'Z', "Zebra");
-				rpMap.addEntity(0, 7, 'Y', "Yak");
-				rpMap.addEntity(7, 0, 'X', "Xerus");
-				rpMap.addEntity(7, 1, 'W', "Walrus");
-				rpMap.addEntity(7, 7, 'U', "Unicorn");
+				rpMap.addEntity(1, 1, 'Z', "Zebra");
+				rpMap.addEntity(1, 8, 'Y', "Yak");
+				rpMap.addEntity(8, 1, 'X', "Xerus");
+				rpMap.addEntity(8, 2, 'W', "Walrus");
+				rpMap.addEntity(8, 8, 'U', "Unicorn");
 			} catch (NameAlreadyBoundException e) {
 				e.printStackTrace();
 			}

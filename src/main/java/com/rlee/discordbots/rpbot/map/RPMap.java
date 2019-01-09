@@ -89,6 +89,10 @@ public class RPMap {
 		return showMap(bottomRow, leftCol, mapPrinter.getRowCount(), mapPrinter.getColCount());
 	}
 
+	public String showMap(RPCoordinate bottomLeftCorner) {
+		return showMap(bottomLeftCorner, mapPrinter.getRowCount(), mapPrinter.getColCount());
+	}
+
 	public String showMap(int bottomRow, int leftCol, int rowCount, int colCount) {
 		return showMap(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
 	}

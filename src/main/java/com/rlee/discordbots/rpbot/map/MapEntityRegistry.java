@@ -159,7 +159,7 @@ class MapEntityRegistry implements Registry {
 		if (!Util.isEmptyCollection(entityListAtCoordinate)) {
 			removeEntityCoordinateResult = entityListAtCoordinate.remove(mapEntity);
 			if (entityListAtCoordinate.isEmpty()) {
-				entitiesByCoordinate.remove(mapEntity.getSymbol()); // Clear empty lists for memory efficiency
+				entitiesByCoordinate.remove(mapEntity.getCoordinate()); // Clear empty lists for memory efficiency
 			}
 		}
 

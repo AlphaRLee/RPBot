@@ -1,6 +1,6 @@
 package com.rlee.discordbots.rpbot.game;
 
-import com.rlee.discordbots.rpbot.map.RPMap;
+import com.rlee.discordbots.rpbot.map.RPMapConfig;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.GameRegistry;
@@ -12,7 +12,8 @@ import net.dv8tion.jda.core.entities.Guild;
 public class RPGame {
 
 	private GameFileManager gameFileManager;
-	
+	private RPMapConfig mapConfig;
+
 	private GameRegistry gameRegistry;
 	private ProfileRegistry profileRegistry;
 	private AliasRegistry aliasRegistry;
@@ -27,13 +28,15 @@ public class RPGame {
 	private void setup(GameRegistry gameRegistry, Guild guild) {
 		this.gameRegistry = gameRegistry;
 		this.guild = guild;
-		this.profileRegistry = new ProfileRegistry(this);
-		this.aliasRegistry = new AliasRegistry(this);
-		this.mapRegistry = new MapRegistry(this);
+		profileRegistry = new ProfileRegistry(this);
+		aliasRegistry = new AliasRegistry(this);
+		mapRegistry = new MapRegistry(this);
+		mapConfig = new RPMapConfig();
 
 		gameFileManager = new GameFileManager(this);
 		gameFileManager.checkCreateFiles();
 		gameFileManager.loadProfiles();
+		gameFileManager.loadConfig();
 	}
 	
 	public GameRegistry getGameRegistry() {
@@ -54,6 +57,10 @@ public class RPGame {
 
 	public MapRegistry getMapRegistry() {
 		return mapRegistry;
+	}
+
+	public RPMapConfig getMapConfig() {
+		return mapConfig;
 	}
 
 	public void saveProfile(CharProfile profile) {

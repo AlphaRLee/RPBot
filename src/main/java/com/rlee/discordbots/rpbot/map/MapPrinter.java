@@ -3,6 +3,7 @@ package com.rlee.discordbots.rpbot.map;
 import com.rlee.discordbots.rpbot.Util;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 class MapPrinter {
 	private Iterator<Map.Entry<RPCoordinate, RPMapEntityList>> printableEntityIterator;
@@ -71,7 +72,17 @@ class MapPrinter {
 		RPCoordinate topLeftCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol());
 		RPCoordinate bottomRightCorner = new RPCoordinate(bottomLeftCorner.getRow(), bottomLeftCorner.getCol() + colCount - 1);
 		//Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
-		NavigableMap<RPCoordinate, RPMapEntityList> printableEntities = entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true);
+		// Getting a shallow copy of the map for modification purposes
+		NavigableMap<RPCoordinate, RPMapEntityList> printableEntities = new TreeMap<RPCoordinate, RPMapEntityList>(entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true));
+
+		// Remove entities that has coordinates outside desired columns TODO think of more efficient algorithm
+		Iterator<RPCoordinate> keyIterator = printableEntities.keySet().iterator();
+		while (keyIterator.hasNext()) {
+			RPCoordinate coordinate = keyIterator.next();
+			if (coordinate.getCol() < topLeftCorner.getCol() || coordinate.getCol() > bottomRightCorner.getCol()) {
+				keyIterator.remove();
+			}
+		}
 
 		printableEntityIterator = printableEntities.entrySet().iterator();
 		if (printableEntityIterator.hasNext()) {
@@ -144,7 +155,7 @@ class MapPrinter {
 	 * @return
 	 */
 	private String showRow(int rowIndex, int leftCol) {
-		int netColCount = Math.min(colCount, maxColCount);
+		int netColCount = Math.min(colCount, maxColCount); // The "actual" col count. Used for edge case where maxColCount < colCount
 
 		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
 		StringBuilder sb = new StringBuilder();
