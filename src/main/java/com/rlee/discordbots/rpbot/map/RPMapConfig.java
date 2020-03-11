@@ -13,6 +13,8 @@ import java.io.IOException;
  * A general class for holding configuration for RPMaps, based per RPGame
  */
 public class RPMapConfig {
+	private String configFilePath;
+
 	private int rowCount, colCount;
 	private int rowHeight, colWidth;
 	private boolean showBorders;
@@ -20,7 +22,9 @@ public class RPMapConfig {
 	/**
 	 * Create a new RPMapConfig with the default settings
 	 */
-	public RPMapConfig() {
+	public RPMapConfig(String configFilePath) {
+		this.configFilePath = configFilePath;
+
 		rowCount = 8;
 		colCount = 8;
 		rowHeight = 1;
@@ -34,6 +38,35 @@ public class RPMapConfig {
 
 	public void setRowCount(int rowCount) {
 		this.rowCount = rowCount;
+
+		ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+		try {
+			ObjectNode mapNode = (ObjectNode) yamlMapper.readTree(new File(configFilePath)).get("map");
+
+
+
+
+
+
+
+
+
+
+//			yamlMapper.writerWithDefaultPrettyPrinter(). FIXME continue here
+
+
+
+
+
+
+
+
+
+
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public int getColCount() {
@@ -60,7 +93,7 @@ public class RPMapConfig {
 		this.colWidth = colWidth;
 	}
 
-	public boolean isShowBorders() {
+	public boolean doesShowBorders() {
 		return showBorders;
 	}
 
@@ -68,7 +101,7 @@ public class RPMapConfig {
 		this.showBorders = showBorders;
 	}
 
-	public void readMapConfigFromFile(String configFilePath) throws FileNotFoundException {
+	public void readMapConfigFromFile() throws FileNotFoundException {
 		File configFile = new File(configFilePath);
 		ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 

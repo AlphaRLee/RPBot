@@ -8,7 +8,8 @@ class MapPrinter {
 	private Iterator<Map.Entry<RPCoordinate, RPMapEntityList>> printableEntityIterator;
 	private Map.Entry<RPCoordinate, RPMapEntityList> nextPrintableEntityList;
 
-	private boolean showBorders = true;
+	private RPMapConfig mapConfig; // Configuration settings for the MapPrinter
+
 	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
 	private static final char colDividerChar = '|';
 	private static final char cornerDividerChar = '+';
@@ -16,13 +17,19 @@ class MapPrinter {
 
 	private static final int BLANK_DIGIT = -999;
 
-	private int maxCharWidth = 3;
-	private int maxCharHeight = 1;
-	private int maxRowCount = 10;
-	private int maxColCount = 10;
+	private static final int maxRowCount = 10;
+	private static final int maxColCount = 20;
+	private static final int maxRowHeight = 3;
+	private static final int maxColWidth = 5;
+
+	private RPCoordinate bottomLeftCorner;
+
+	private boolean showBorders = true;
 
 	private int rowCount;
 	private int colCount;
+	private int rowHeight = 1;
+	private int colWidth = 3;
 
 	private int maxRowIndexWidth;
 	private int maxColIndexWidth;
@@ -31,13 +38,8 @@ class MapPrinter {
 	private String blankInnerRow = null;
 	private String blankRowIndex;
 
-	MapPrinter() {
-		this(8, 8);
-	}
-
-	MapPrinter(int rowCount, int colCount) {
-		this.rowCount = rowCount;
-		this.colCount = colCount;
+	MapPrinter(RPCoordinate bottomLeftCorner, int rowCount, int colCount, int rowHeight, int colWidth, boolean showBorders) {
+		setDisplayConfig(bottomLeftCorner, rowCount, colCount, rowHeight, colWidth, showBorders);
 	}
 
 	int getRowCount() {
@@ -56,6 +58,48 @@ class MapPrinter {
 		this.colCount = colCount;
 	}
 
+	int getRowHeight() {
+		return rowHeight;
+	}
+
+	void setRowHeight(int rowHeight) {
+		this.rowHeight = rowHeight;
+	}
+
+	int getColWidth() {
+		return colWidth;
+	}
+
+	void setColWidth(int colWidth) {
+		this.colWidth = colWidth;
+	}
+
+	boolean doesShowBorders() {
+		return showBorders;
+	}
+
+	void setShowBorders(boolean showBorders) {
+		this.showBorders = showBorders;
+	}
+
+	/**
+	 * Configure display settings for the map
+	 * @param bottomLeftCorner
+	 * @param rowCount
+	 * @param colCount
+	 * @param rowHeight
+	 * @param colWidth
+	 * @param showBorders
+	 */
+	void setDisplayConfig(RPCoordinate bottomLeftCorner, int rowCount, int colCount, int rowHeight, int colWidth, boolean showBorders) {
+		this.bottomLeftCorner = bottomLeftCorner != null ? bottomLeftCorner : new RPCoordinate(1, 1);
+		this.rowCount = Util.boundRange(rowCount, 1, maxRowCount);
+		this.colCount = Util.boundRange(colCount, 1, maxColCount);
+		this.rowHeight = Util.boundRange(rowHeight, 1, maxRowHeight);
+		this.colWidth = Util.boundRange(colWidth, 1, maxColWidth);
+		this.showBorders = showBorders;
+	}
+
 	/**
 	 * Build the printable entities map and establish the iterator for it.
 	 * @param bottomLeftCorner
@@ -64,13 +108,10 @@ class MapPrinter {
 	 * @param entitiesByCoordinate
 	 * @return
 	 */
-	NavigableMap<RPCoordinate, RPMapEntityList> buildPrintableEntities(RPCoordinate bottomLeftCorner,
-	                                                                  int rowCount, int colCount,
-	                                                                  TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate) {
-//		RPCoordinate topRightCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
+	NavigableMap<RPCoordinate, RPMapEntityList> buildPrintableEntities(RPCoordinate bottomLeftCorner, TreeMap<RPCoordinate, RPMapEntityList> entitiesByCoordinate) {
 		RPCoordinate topLeftCorner = new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol());
 		RPCoordinate bottomRightCorner = new RPCoordinate(bottomLeftCorner.getRow(), bottomLeftCorner.getCol() + colCount - 1);
-		//Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
+		// Get a subset of the coordinate map. Note inverted coordinate location to accomodate inverted sort
 		// Getting a shallow copy of the map for modification purposes
 		NavigableMap<RPCoordinate, RPMapEntityList> printableEntities = new TreeMap<RPCoordinate, RPMapEntityList>(entitiesByCoordinate.tailMap(topLeftCorner, true).headMap(bottomRightCorner, true));
 
@@ -98,12 +139,9 @@ class MapPrinter {
 	 * @param colCount The number of columns to print
 	 * @param printableEntities The entities to be printed out
 	 */
-	String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount, NavigableMap<RPCoordinate, RPMapEntityList> printableEntities) {
+	String showMap(RPCoordinate bottomLeftCorner, NavigableMap<RPCoordinate, RPMapEntityList> printableEntities) {
 		int bottomRow = bottomLeftCorner.getRow();
 		int leftCol = bottomLeftCorner.getCol();
-
-		this.rowCount = rowCount;
-		this.colCount = colCount;
 
 		int netRowCount = Math.min(rowCount, maxRowCount); //The "actual" row count. Used for edge case where maxRowCount < rowCount
 
@@ -156,11 +194,11 @@ class MapPrinter {
 	private String showRow(int rowIndex, int leftCol) {
 		int netColCount = Math.min(colCount, maxColCount); // The "actual" col count. Used for edge case where maxColCount < colCount
 
-		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
+		int blankInnerRowCount = (int) rowHeight / 2; //Integer division
 		StringBuilder sb = new StringBuilder();
 
 		//Upper inner-row padding
-		boolean isEven = maxCharHeight % 2 == 0;
+		boolean isEven = rowHeight % 2 == 0;
 		if (isEven) {
 			blankInnerRowCount--;
 		}
@@ -200,8 +238,8 @@ class MapPrinter {
 		}
 
 		StringBuilder sb = new StringBuilder();
-		int blankCharCount = (int) maxCharWidth / 2; //Integer divison
-		boolean isEven = maxCharWidth % 2 == 0;
+		int blankCharCount = (int) colWidth / 2; //Integer divison
+		boolean isEven = colWidth % 2 == 0;
 
 		//Left padding
 		if (isEven) {
@@ -223,7 +261,7 @@ class MapPrinter {
 			sb.append(entityList.get(0).getSymbol());
 
 			// Print info suggesting multiple entities have the same coordinate
-			if (entityList.size() > 1 && maxCharWidth >= 2) {
+			if (entityList.size() > 1 && colWidth >= 2) {
 				sb.append(RPMap.MULTIPLE_ENTITIES_CHAR);
 				blankCharCount--; // One char taken to add the + symbol
 			}
@@ -246,7 +284,7 @@ class MapPrinter {
 
 	private String showBlankEntityCell() {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < maxCharWidth; i++) {
+		for (int i = 0; i < colWidth; i++) {
 			sb.append(blankChar);
 		}
 		return sb.toString();
@@ -266,7 +304,7 @@ class MapPrinter {
 		innerRowBuilder.append(endChar);
 
 		StringBuilder cellBuilder = new StringBuilder();
-		for (int i = 0; i < maxCharWidth; i++) {
+		for (int i = 0; i < colWidth; i++) {
 			cellBuilder.append(lengthChar);
 		}
 		if (showBorders) {
@@ -346,8 +384,8 @@ class MapPrinter {
 
 	private String showColIndexCell(int indexDigit) {
 		StringBuilder sb = new StringBuilder();
-		int blankCharCount = (int) maxCharWidth / 2; //Integer divison
-		boolean isEven = maxCharWidth % 2 == 0;
+		int blankCharCount = (int) colWidth / 2; //Integer divison
+		boolean isEven = colWidth % 2 == 0;
 
 		//Left padding
 		if (isEven) {

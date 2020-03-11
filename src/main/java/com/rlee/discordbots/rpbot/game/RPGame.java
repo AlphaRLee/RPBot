@@ -31,9 +31,9 @@ public class RPGame {
 		profileRegistry = new ProfileRegistry(this);
 		aliasRegistry = new AliasRegistry(this);
 		mapRegistry = new MapRegistry(this);
-		mapConfig = new RPMapConfig();
-
 		gameFileManager = new GameFileManager(this);
+		mapConfig = gameFileManager.createMapConfig();
+
 		gameFileManager.checkCreateFiles();
 		gameFileManager.loadProfiles();
 		gameFileManager.loadConfig();

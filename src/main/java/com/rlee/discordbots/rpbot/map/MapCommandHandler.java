@@ -389,7 +389,7 @@ public class MapCommandHandler {
 		}
 
 		String mapName = args[2];
-		RPMap map = new RPMap(mapName);
+		RPMap map = new RPMap(mapName, game.getMapConfig());
 
 		try {
 			mapRegistry.addMap(map);

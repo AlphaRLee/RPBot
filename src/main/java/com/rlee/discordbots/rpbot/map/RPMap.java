@@ -19,6 +19,8 @@ public class RPMap {
 
 	private String name;
 
+	private RPMapConfig mapConfig;
+
 	private static CoordinateParser coordinateParser;
 	private MapEntityRegistry mapEntityRegistry;
 	private MapPrinter mapPrinter;
@@ -26,12 +28,13 @@ public class RPMap {
 
 	private Message sourceMessage;
 	
-	public RPMap(String name) {
+	public RPMap(String name, RPMapConfig mapConfig) {
 		this.name = name;
+		this.mapConfig = mapConfig;
 
 		coordinateParser = new CoordinateParser();
 		mapEntityRegistry = new MapEntityRegistry();
-		mapPrinter = new MapPrinter();
+		mapPrinter = new MapPrinter(new RPCoordinate(1, 1), mapConfig.getRowCount(), mapConfig.getColCount(), mapConfig.getRowHeight(), mapConfig.getColWidth(), mapConfig.doesShowBorders());
 		mapLegendPrinter = new MapLegendPrinter();
 	}
 
@@ -82,23 +85,15 @@ public class RPMap {
 	 * @return
 	 */
 	public String showMap() {
-		return showMap(0, 0, mapPrinter.getRowCount(), mapPrinter.getColCount());
+		return showMap(1, 1);
 	}
 
 	public String showMap(int bottomRow, int leftCol) {
-		return showMap(bottomRow, leftCol, mapPrinter.getRowCount(), mapPrinter.getColCount());
+		return showMap(new RPCoordinate(bottomRow, leftCol));
 	}
 
 	public String showMap(RPCoordinate bottomLeftCorner) {
-		return showMap(bottomLeftCorner, mapPrinter.getRowCount(), mapPrinter.getColCount());
-	}
-
-	public String showMap(int bottomRow, int leftCol, int rowCount, int colCount) {
-		return showMap(new RPCoordinate(bottomRow, leftCol), rowCount, colCount);
-	}
-
-	public String showMap(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
-		return mapPrinter.showMap(bottomLeftCorner, rowCount, colCount, mapPrinter.buildPrintableEntities(bottomLeftCorner, rowCount, colCount, mapEntityRegistry.getEntitiesByCoordinate()));
+		return mapPrinter.showMap(bottomLeftCorner, mapPrinter.buildPrintableEntities(bottomLeftCorner, mapEntityRegistry.getEntitiesByCoordinate()));
 	}
 
 	public String showLegendBySymbols() {

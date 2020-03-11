@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import com.rlee.discordbots.rpbot.map.RPMapConfig;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
 import com.rlee.discordbots.rpbot.reader.ProfileReader;
@@ -20,6 +21,10 @@ public class GameFileManager {
 		this.game = game;
 		gameDirectoryPath = "games/" + game.getGuild().getId();
 		configFilePath = gameDirectoryPath + "/config.yml";
+	}
+
+	RPMapConfig createMapConfig() {
+		return new RPMapConfig(configFilePath);
 	}
 
 	/**
@@ -57,7 +62,7 @@ public class GameFileManager {
 		// Presently only maps have config
 		try {
 			System.out.println("Now reading: " + configFilePath); // FIXME delete test code
-			game.getMapConfig().readMapConfigFromFile(configFilePath);
+			game.getMapConfig().readMapConfigFromFile();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
