@@ -47,7 +47,7 @@ public class MessageListener extends ListenerAdapter {
 	 */
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
-		String message = event.getMessage().getContentRaw(); // FIXME: Test between getContentRaw and getContentStripped
+		String message = event.getMessage().getContentRaw();
 
 		if (message.toLowerCase().startsWith(COMMAND_PREFIX + "ping")) {
 			MessageChannel channel = event.getChannel();
@@ -80,7 +80,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		Message message = event.getMessage();
 		Member member = event.getMember();
-		String content = message.getContentRaw(); // FIXME:  Test getContentRaw vs getContentStripped
+		String content = message.getContentRaw();
 		TextChannel channel = event.getChannel();
 		
 		if (content.startsWith(COMMAND_PREFIX)) {
