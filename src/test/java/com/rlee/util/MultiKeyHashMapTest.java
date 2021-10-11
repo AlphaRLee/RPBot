@@ -19,8 +19,6 @@ class MultiKeyHashMapTest {
 		assertEquals("second", map.get(2));
 		assertEquals("second", map.get(2.2));
 		assertEquals("second", map.get('b'));
-
-		System.out.println("Happy path testing for put() PASSED.");
 	}
 
 	@Test

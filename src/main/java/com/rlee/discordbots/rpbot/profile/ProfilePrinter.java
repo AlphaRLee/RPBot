@@ -3,8 +3,7 @@ package com.rlee.discordbots.rpbot.profile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageChannel;
 
 /**
  * Utility class for printing out a profile

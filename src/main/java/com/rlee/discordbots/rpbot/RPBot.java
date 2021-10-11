@@ -14,13 +14,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.regitstry.GameRegistry;
 
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.entities.Game;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 
 public class RPBot {
 	
@@ -35,11 +33,14 @@ public class RPBot {
 	private static final String configFilePath = configDirectoryPath + "/config.yml";
 
 	public static void main(String[] args) {
-		readConfig();	//Sets the TOKEN and the commandPrefix
+		readConfig();
 		startJDA();
 		setup();
 	}
 
+	/**
+	 * Set the static vars TOKEN and commandPrefix based on config/config.yml file
+	 */
 	private static void readConfig() {
 		File configDirectory = new File(configDirectoryPath);
 		if (!configDirectory.exists() || !configDirectory.isDirectory()) {
@@ -71,11 +72,11 @@ public class RPBot {
 	private static void startJDA() {
 		try {
 			//Instantiate JDA api
-			jda = new JDABuilder(AccountType.BOT).setToken(TOKEN).buildBlocking(); 
+			JDABuilder builder = JDABuilder.createDefault(TOKEN);
+			builder.setActivity(Activity.playing("A Roleplay Attempt"));
+			jda = builder.build().awaitReady();
 			jda.addEventListener(new MessageListener(commandPrefix)); // Add event listener for messages
-			jda.getPresence().setGame(Game.playing("A Roleplay Attempt"));
-
-		} catch (LoginException | IllegalArgumentException | InterruptedException | RateLimitedException e) {
+		} catch (LoginException | IllegalArgumentException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	

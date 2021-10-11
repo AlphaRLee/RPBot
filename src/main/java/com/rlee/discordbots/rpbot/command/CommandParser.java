@@ -3,8 +3,8 @@ package com.rlee.discordbots.rpbot.command;
 import com.rlee.discordbots.rpbot.MessageListener;
 
 import com.rlee.discordbots.rpbot.Util;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.awt.*;
 import java.util.Random;
@@ -12,7 +12,7 @@ import java.util.Random;
 public class CommandParser {
 
 	private String[] args;
-	private TextChannel channel;	
+	private TextChannel channel;
 
 	private String lastUsageMessage;
 	private String errorDescription;

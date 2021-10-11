@@ -2,7 +2,7 @@ package com.rlee.discordbots.rpbot.map;
 
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
-import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.api.entities.Message;
 
 import javax.naming.NameAlreadyBoundException;
 

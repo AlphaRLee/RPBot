@@ -6,8 +6,7 @@ import java.util.Map;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
-
-import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.api.entities.Member;
 
 public class ProfileRegistry implements Registry {
 	private RPGame game;

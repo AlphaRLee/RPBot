@@ -6,9 +6,9 @@ import com.rlee.discordbots.rpbot.command.CommandParser;
 import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.regitstry.MapRegistry;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 import javax.naming.NameAlreadyBoundException;
 import java.util.StringJoiner;

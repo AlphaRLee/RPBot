@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.rlee.discordbots.rpbot.game.RPGame;
-
-import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.api.entities.Guild;
 
 public class GameRegistry {
 	private Map<Guild, RPGame> gamesByGuild;

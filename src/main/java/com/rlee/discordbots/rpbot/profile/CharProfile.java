@@ -5,9 +5,8 @@ import java.util.Map;
 
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
-
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 
 /**
  * Object carrying profille information about a character
@@ -117,7 +116,7 @@ public class CharProfile {
 	/**
 	 * Set the particular attribute to the given attribute name, stored in lower case.
 	 * @param attributeName Attribute name. If null or empty, does nothing.
-	 * @param value
+	 * @param attribute
 	 *
 	 * @author R Lee
 	 */

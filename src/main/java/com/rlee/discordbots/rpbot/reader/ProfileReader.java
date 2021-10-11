@@ -16,10 +16,10 @@ import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
 
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 public class ProfileReader {
 	
@@ -61,7 +61,7 @@ public class ProfileReader {
 			return null;
 		}
 		
-		CharProfile profile = readProfile(message.getContent(), registry);
+		CharProfile profile = readProfile(message.getContentStripped(), registry);
 		
 		if (!isValidProfile(profile)) {
 			return null;

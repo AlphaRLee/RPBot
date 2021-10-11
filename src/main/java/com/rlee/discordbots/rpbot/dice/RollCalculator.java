@@ -13,10 +13,9 @@ import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
-
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 public class RollCalculator {
 
@@ -24,7 +23,7 @@ public class RollCalculator {
 	
 	/**
 	 * Calculate the roll outcome and output it to the specified channel
-	 * @param args
+	 * @param expression
 	 * @param channel
 	 * @param author
 	 * @param rollAttribute Set to true to roll a die for each attribute where the number of faces on die is the attribute value
@@ -32,7 +31,7 @@ public class RollCalculator {
 	 * @author R Lee
 	 */
 	public void compute(String expression, MessageChannel channel, User author, boolean rollAttribute) {
-		List<Integer> numbers = new LinkedList<Integer>();
+		List<Integer> numbers = new LinkedList<>();
 		String sender = author.getAsMention();
 		boolean inGame = channel instanceof TextChannel;
 		
@@ -59,7 +58,7 @@ public class RollCalculator {
     				break getProfile; //Char does not occur
     			}
     			
-    			String endArg = expression.substring(lastIndex + 1, expression.length());
+    			String endArg = expression.substring(lastIndex + 1);
     			
     			//Try computing the arg. Search for empty array as indicator this is not a valid expression
     			if (!computeArg(endArg, endArg.startsWith("\\-"), profile, rollAttribute, false, false, game.getAliasRegistry(), quickAttributes).isEmpty()) {

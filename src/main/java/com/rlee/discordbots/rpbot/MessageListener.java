@@ -12,15 +12,14 @@ import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
 import com.rlee.discordbots.rpbot.reader.ProfileReader;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
-
-import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class MessageListener extends ListenerAdapter {
 
@@ -47,9 +46,7 @@ public class MessageListener extends ListenerAdapter {
 	 */
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
-		String message = event.getMessage().getContent();
-
-		// TODO: Fill me!
+		String message = event.getMessage().getContentRaw(); // FIXME: Test between getContentRaw and getContentStripped
 
 		if (message.toLowerCase().startsWith(COMMAND_PREFIX + "ping")) {
 			MessageChannel channel = event.getChannel();
@@ -58,7 +55,7 @@ public class MessageListener extends ListenerAdapter {
 			boolean canSendMessage = true;
 			String output = "Pong! I'm growing to build up your tabletop RPG experience!"
 					+ "\n```\nResponse ping time: "
-					+ event.getJDA().getPing() + "\n```";
+					+ event.getJDA().getGatewayPing() + "\n```";
 
 			canSendMessage = event.getTextChannel().canTalk();
 
@@ -82,7 +79,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		Message message = event.getMessage();
 		Member member = event.getMember();
-		String content = message.getContent();
+		String content = message.getContentRaw(); // FIXME:  Test getContentRaw vs getContentStripped
 		TextChannel channel = event.getChannel();
 		
 		if (content.startsWith(COMMAND_PREFIX)) {
@@ -201,8 +198,8 @@ public class MessageListener extends ListenerAdapter {
 			}
 			
 			//Operation blocks thread until request is completed. Avoid using the .complete() method when possible!
-			Message sourceMessage = mentionedChannels.get(0).getMessageById(args[2]).complete();
-			
+			Message sourceMessage = mentionedChannels.get(0).retrieveMessageById(args[2]).complete();
+
 			ProfileReader reader = new ProfileReader();
 			CharProfile profile = reader.readProfileFromMessage(sourceMessage, game.getProfileRegistry());
 			

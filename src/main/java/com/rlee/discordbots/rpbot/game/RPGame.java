@@ -6,8 +6,7 @@ import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.GameRegistry;
 import com.rlee.discordbots.rpbot.regitstry.MapRegistry;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
-
-import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.api.entities.Guild;
 
 public class RPGame {
 
