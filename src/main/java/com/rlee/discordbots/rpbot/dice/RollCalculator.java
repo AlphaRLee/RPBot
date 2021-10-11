@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
@@ -35,7 +36,7 @@ public class RollCalculator {
 		String sender = author.getAsMention();
 		boolean inGame = channel instanceof TextChannel;
 		
-		if (!RPBot.isEmptyString(expression)) {
+		if (!Util.isEmptyString(expression)) {
     		RPGame game = null;
     		CharProfile profile = null;
     		Map<String, Attribute> quickAttributes = new HashMap<String, Attribute>(); //Quick list used to reduce attribute-searching
@@ -131,7 +132,7 @@ public class RollCalculator {
 	 */
 	private List<Integer> computeArg(String arg, boolean isNegative, CharProfile profile, boolean rollAttribute, boolean prependDefault, boolean padZero,
 			AliasRegistry aliasRegistry, Map<String, Attribute> quickAttributes) {
-		if (RPBot.isEmptyString(arg)) {
+		if (Util.isEmptyString(arg)) {
 			return new LinkedList<Integer>();
 		}
 		
@@ -224,7 +225,7 @@ public class RollCalculator {
 		}
 		
 		//Try getting the max count, if requested
-		if (!RPBot.isEmptyString(args[COUNT_ARG])) {
+		if (!Util.isEmptyString(args[COUNT_ARG])) {
     		try {
     			maxCount = Integer.parseInt(args[COUNT_ARG]);
     		} catch (NumberFormatException e) {
@@ -269,7 +270,7 @@ public class RollCalculator {
 	}
 	
 	private CharProfile getProfile(String name, ProfileRegistry registry) {
-		if (registry == null || RPBot.isEmptyString(name)) {
+		if (registry == null || Util.isEmptyString(name)) {
 			return null;
 		}
 		

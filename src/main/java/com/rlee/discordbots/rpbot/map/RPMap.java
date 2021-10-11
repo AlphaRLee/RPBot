@@ -1,10 +1,10 @@
 package com.rlee.discordbots.rpbot.map;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import com.rlee.discordbots.rpbot.Util;
+import com.rlee.discordbots.rpbot.exception.InvalidCoordinateException;
 import net.dv8tion.jda.core.entities.Message;
+
+import javax.naming.NameAlreadyBoundException;
 
 /**
  * A 2D visual text map
@@ -12,208 +12,158 @@ import net.dv8tion.jda.core.entities.Message;
  *
  */
 public class RPMap {
-	private ArrayList<ArrayList<RPMapEntity<?>>> entityMap; //Visual map that contains data on region
-	private Map<Character, RPMapEntity<?>> entityLookup; //Lookup for all entities that are generated
-	
-	private boolean showBorder = true;
-	private static final char rowDividerChar = '\u2014'; //The \u2014 is unicode for long dash character
-	private static final char colDividerChar = '|';
-	private static final char cornerDividerChar = '+';
-	private static final char blankChar = ' ';
-	
-	private int maxCharWidth = 3;
-	private int maxCharHeight = 1;
-	private int maxRowCount = 8;
-	private int maxColCount = 8;
-	
-	private int rowCount;
-	private int colCount;
-	
-	private String rowDivider = null; 
-	private String blankInnerRow = null;
-	
+	static final int ROW_RADIX = 10;
+	static final int COL_RADIX = 27; //Column uses Base 27 system: .=0 A=1 B=2 ... y=25 Z=26 A.=27 AA=28
+	static final char ALPHA_ZERO_CHAR = '.'; //Does that look weird? Yes, that looks very weird. Base 27 numbering system!
+	static final char MULTIPLE_ENTITIES_CHAR = '+';
+
+	private String name;
+
+	private RPMapConfig mapConfig;
+
+	private static CoordinateParser coordinateParser;
+	private MapEntityRegistry mapEntityRegistry;
+	private MapPrinter mapPrinter;
+	private MapLegendPrinter mapLegendPrinter;
+
 	private Message sourceMessage;
 	
-	public RPMap() {
-		this(8, 8);
+	public RPMap(String name, RPMapConfig mapConfig) {
+		this.name = name;
+		this.mapConfig = mapConfig;
+
+		coordinateParser = new CoordinateParser();
+		mapEntityRegistry = new MapEntityRegistry();
+		mapPrinter = new MapPrinter(new RPCoordinate(1, 1), mapConfig.getRowCount(), mapConfig.getColCount(), mapConfig.getRowHeight(), mapConfig.getColWidth(), mapConfig.doesShowBorders());
+		mapLegendPrinter = new MapLegendPrinter();
 	}
-	
-	public RPMap(int rowCount, int colCount) {
-		
-		entityMap = new ArrayList<>();
-		entityLookup = new LinkedHashMap<>();
-		this.rowCount = rowCount;
-		this.colCount = colCount;
-		
-		fillEntityMap();
+
+	public String getName() {
+		return name;
 	}
-	
-	@Deprecated
-	private void fillEntityMap() {
-		//TODO Get rid of this test method
-		ArrayList<RPMapEntity<?>> row;
-		while (rowCount >= entityMap.size()) {
-			row = new ArrayList<RPMapEntity<?>>();
-			while (colCount >= row.size()) {
-				row.add(null);
-			}
-			entityMap.add(row);
-		}
-	}
-	
+
 	public void setSourceMessage(Message sourceMessage) {
 		this.sourceMessage = sourceMessage;
 	}
-		
-	@Deprecated
-	public void setAt(int rowIndex, int colIndex, RPMapEntity entity) {
-		//TODO Delete this test function and use a hashmap implementation
-		ArrayList<RPMapEntity<?>> row = entityMap.get(rowIndex);
-		row.set(colIndex, entity);
+
+	public RPMapEntity<?> getEntity(String name) {
+		return mapEntityRegistry.getEntity(name);
 	}
-	
+
+	/**
+	 * Add a new entity at the given coordinates.
+	 * Always allows for auto-renaming
+	 * @param rowIndex The row to set the entity at
+	 * @param colIndex The column to set the entity at
+	 * @param symbol A single char representation of the entity to insert
+	 * @param entity The entity to insert in the map
+	 * @param <E> The class of the entity
+	 * @throws NameAlreadyBoundException Thrown if renaming is not allowed and the name is already taken.
+	 */
+	public <E> String addEntity(int rowIndex, int colIndex, char symbol, E entity) throws NameAlreadyBoundException {
+		return addEntity(new RPCoordinate(rowIndex, colIndex), symbol, entity, true);
+	}
+
+	public <E> String addEntity(RPCoordinate coordinate, char symbol, E entity, boolean allowAutoRename) throws NameAlreadyBoundException {
+		return mapEntityRegistry.addEntity(coordinate, new RPMapEntity<E>(symbol, entity, coordinate), allowAutoRename);
+	}
+
+	public boolean removeEntity(RPMapEntity<?> mapEntity) {
+		return mapEntityRegistry.removeEntity(mapEntity);
+	}
+
+	public void setEntitySymbol(RPMapEntity<?> mapEntity, char symbol) {
+		mapEntityRegistry.setEntitySymbol(mapEntity, symbol);
+	}
+
+	public void clearEntities() {
+		mapEntityRegistry.clearEntities();
+	}
+
 	/**
 	 * Get the entity map as a string starting with the top left corner at (0, 0)
 	 * @return
 	 */
 	public String showMap() {
-		return showMap(0, 0);
+		return showMap(1, 1);
 	}
-	
-	/**
-	 * Get the entity map as a string starting with the given coordinates for the top-left corner
-	 * @param leftEdge
-	 * @param bottomEdge
-	 */
-	public String showMap(int leftEdge, int bottomEdge) {
-		StringBuilder sb = new StringBuilder("```\n");
-		
-		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
-		if (showBorder) {
-			if (rowDivider == null) {
-				rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
-			}
-			
-			sb.append(rowDivider).append("\n");
-		}
-		
-		int minRowCount = Math.min(rowCount, maxRowCount);
-		//NOTE Reverse iteration used to flip Y axis
-		for (int i = bottomEdge + minRowCount - 1; i >= bottomEdge; i--) {
-			sb.append(showRow(i, leftEdge));
-			
-			if (showBorder) {
-				sb.append(rowDivider).append("\n");
-			}
-		}
-		
-		return sb.append("```").toString();
+
+	public String showMap(int bottomRow, int leftCol) {
+		return showMap(new RPCoordinate(bottomRow, leftCol));
 	}
-	
+
+	public String showMap(RPCoordinate bottomLeftCorner) {
+		return mapPrinter.showMap(bottomLeftCorner, mapPrinter.buildPrintableEntities(bottomLeftCorner, mapEntityRegistry.getEntitiesByCoordinate()));
+	}
+
+	public String showLegendBySymbols() {
+		return mapLegendPrinter.showLegendBySymbols(name, mapEntityRegistry.getEntitiesBySymbol());
+	}
+
+	String showLegendByParsedArg(String arg) throws InvalidSearchTypeException {
+		if (Util.isEmptyString(arg)) {
+			return null;
+		}
+
+		String invalidSearchTypeExceptionMessage = "Selection could not be performed: " + arg + " is not recognized as a symbol or a coordinate.";
+
+		// TODO Move this dirty code elsewhere inside MapEntityRegistry
+		MapEntityRegistry.SearchType searchType = mapEntityRegistry.parseSearchType(arg);
+		switch (searchType) {
+			case SYMBOL:
+				char symbol = arg.charAt(0);
+				return mapLegendPrinter.getSymbolLegend(symbol, mapEntityRegistry.getEntityList(symbol));
+			case COORDINATE:
+				try {
+					RPCoordinate coord = parseCoordinates(arg);
+					return mapLegendPrinter.getCoordinateLegend(coord, mapEntityRegistry.getEntityList(coord));
+				} catch (InvalidCoordinateException e) {
+					throw new InvalidSearchTypeException(invalidSearchTypeExceptionMessage);
+				}
+			default:
+				throw new InvalidSearchTypeException(invalidSearchTypeExceptionMessage);
+		}
+	}
+
 	/**
-	 * Print one row of the entity map.
-	 * Always appends a newline character to the end
-	 * @param rowIndex
-	 * @param leftEdge
+	 * Calculate the top right corner, inclusive
+	 * @param bottomLeftCorner
+	 * @param rowCount
+	 * @param colCount
 	 * @return
 	 */
-	private String showRow(int rowIndex, int leftEdge) {
-		int minColCount = Math.min(colCount, maxColCount);
-		
-		int blankInnerRowCount = (int) maxCharHeight / 2; //Integer division
-		StringBuilder sb = new StringBuilder();
-		
-		boolean isEven = maxCharHeight % 2 == 0;
-		if (isEven) {
-			blankInnerRowCount--;
-		}
-		for (int i = 0; i < blankInnerRowCount; i++) {
-			sb.append(blankInnerRow).append("\n");
-		}
-		if (isEven) {
-			blankInnerRowCount++;
-		}
-		
-		if (showBorder) {
-			sb.append(colDividerChar);
-		}
-		
-		ArrayList<RPMapEntity<?>> row = entityMap.get(rowIndex);
-		for (int i = leftEdge; i < leftEdge + minColCount; i++) {
-			sb.append(showEntityCell(row, i));
-			
-			if (showBorder) {
-				sb.append(colDividerChar);
-			}
-		}
-		sb.append("\n");
-		
-		for (int i = 0; i < blankInnerRowCount; i++) {
-			sb.append(blankInnerRow).append("\n");
-		}
-		
-		return sb.toString();
+	private RPCoordinate calculateTopRightCorner(RPCoordinate bottomLeftCorner, int rowCount, int colCount) {
+		return new RPCoordinate(bottomLeftCorner.getRow() + rowCount - 1, bottomLeftCorner.getCol() + colCount - 1);
 	}
-	
-	private String showEntityCell(ArrayList<RPMapEntity<?>> row, int colIndex) {	
-		StringBuilder sb = new StringBuilder();
-		
-		RPMapEntity<?> entity = null;
-		
-		int blankCharCount = (int) maxCharWidth / 2; //Integer divison
-		boolean isEven = maxCharWidth % 2 == 0;
-		
-		if (isEven) {
-			blankCharCount--;
-		}
-		for (int k = 0; k < blankCharCount; k++) {
-			sb.append(blankChar);
-		}
-		if (isEven) {
-			blankCharCount++;
-		}
-		
-		entity = row.get(colIndex);
-		if (entity != null) {
-			sb.append(entity.getSymbol());
-		} else {
-			sb.append(blankChar);
-		}
-		
-		for (int k = 0; k < blankCharCount; k++) {
-			sb.append(blankChar);
-		}
-		return sb.toString();
+
+	void moveEntityToCoordinate(RPMapEntity<?> mapEntity, RPCoordinate destCoordinate) {
+		mapEntityRegistry.moveEntityToCoordinate(mapEntity, destCoordinate);
 	}
-	
+
+	RPMapEntity<?> parseMapEntity(String mapEntityArg) throws AmbiguousSelectionException {
+		return mapEntityRegistry.parseEntity(mapEntityArg);
+	}
+
+	RPMapEntityList parseMapEntityList(String mapEntityArg) throws InvalidCoordinateException {
+		return mapEntityRegistry.parseMapEntityList(mapEntityArg);
+	}
+
+	static RPCoordinate parseCoordinates(String coordinateArg) throws InvalidCoordinateException {
+		return coordinateParser.parseCoordinates(coordinateArg);
+	}
+
 	/**
-	 * Build a single line of a row
-	 * <p>E.g. +---+---+---+</p>
-	 * @param lengthChar The character to put in between intersections
-	 * @param endChar The charcter to put on the end of the row
-	 * @return The string representation of a row
+	 * Get whether or not the given coordinate is between the bottom left corner and the top right corner, inclusively
+	 * @param coordinate
+	 * @param bottomLeftCorner
+	 * @param topRightCorner
+	 * @return True if the coordinate is within, false if not.
 	 */
-	private String buildInnerRow(char lengthChar, char endChar) {
-		int minRowCount = Math.min(rowCount, maxRowCount);
-		
-		StringBuilder innerRowBuilder = new StringBuilder();
-		if (showBorder) {
-			innerRowBuilder.append(endChar);
-		}
-		
-		StringBuilder cellBuilder = new StringBuilder();
-		for (int i = 0; i < maxCharWidth; i++) {
-			cellBuilder.append(lengthChar);
-		}
-		if (showBorder) {
-			cellBuilder.append(endChar);
-		}
-		String blankRowUnit = cellBuilder.toString();
-		
-		for (int i = 0; i < minRowCount; i++) {
-			innerRowBuilder.append(blankRowUnit);
-		}
-		
-		return innerRowBuilder.toString();
+	static boolean isInRegion(RPCoordinate coordinate, RPCoordinate bottomLeftCorner, RPCoordinate topRightCorner) {
+		int left = bottomLeftCorner.getCol(), bottom = bottomLeftCorner.getRow();
+		int right = topRightCorner.getCol(), top = topRightCorner.getRow();
+		int x = coordinate.getCol(), y = coordinate.getRow(); //Entity coordinates
+
+		return (x >= left && x <= right && y >= bottom && y <= top);
 	}
 }

@@ -3,7 +3,7 @@ package com.rlee.discordbots.rpbot.profile;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
 
 import net.dv8tion.jda.core.entities.Member;
@@ -122,7 +122,7 @@ public class CharProfile {
 	 * @author R Lee
 	 */
 	public void setAttribute(String attributeName, Attribute attribute) {
-		if (RPBot.isEmptyString(attributeName)) {
+		if (Util.isEmptyString(attributeName)) {
 			return;
 		}
 		
@@ -137,7 +137,7 @@ public class CharProfile {
 	 * @author R Lee
 	 */
 	public boolean hasAttribute(String attributeName) {
-		if (RPBot.isEmptyString(attributeName)) {
+		if (Util.isEmptyString(attributeName)) {
 			return false;
 		}
 		
@@ -145,7 +145,7 @@ public class CharProfile {
 	}
 	
 	public Attribute removeAttribute(String attributeName) {
-		if (RPBot.isEmptyString(attributeName) || !hasAttribute(attributeName)) {
+		if (Util.isEmptyString(attributeName) || !hasAttribute(attributeName)) {
 			return null;
 		}
 		

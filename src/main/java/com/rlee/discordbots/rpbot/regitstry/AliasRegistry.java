@@ -3,7 +3,7 @@ package com.rlee.discordbots.rpbot.regitstry;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
@@ -55,7 +55,7 @@ public class AliasRegistry {
 			return;
 		}
 		
-		aliases.put(RPBot.replaceWhitespaces(alias, true), RPBot.replaceWhitespaces(full, true));
+		aliases.put(Util.replaceWhitespaces(alias, true), Util.replaceWhitespaces(full, true));
 	}
 	
 	/**
@@ -91,7 +91,7 @@ public class AliasRegistry {
 		//TODO: TEST BELOW CODE SEGMENT AND DELETE ABOVE SEGMENT
 		
 		String fullAttr = getAttributeName(attributeName, profile);
-		if (RPBot.isEmptyString(fullAttr)) {
+		if (Util.isEmptyString(fullAttr)) {
 			return null;
 		}
 		
@@ -107,7 +107,7 @@ public class AliasRegistry {
 	 * @author R Lee
 	 */
 	public String getAttributeName(String alias, CharProfile profile) {
-		if (RPBot.isEmptyString(alias) || profile == null) {
+		if (Util.isEmptyString(alias) || profile == null) {
 			return null;
 		}
 		

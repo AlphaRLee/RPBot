@@ -1,43 +1,76 @@
 package com.rlee.discordbots.rpbot.map;
 
-public class RPMapEntity <E> {
-	private char symbol;
+class RPMapEntity <E> {
 	private E entity;
-	
-	public RPMapEntity(char symbol, E entity) {
-		this.symbol = symbol;	//TODO Add support for 2D shape instead of single char
-		this.entity = entity;
+
+	private char symbol;
+	private String name;
+	private RPCoordinate coordinate;
+
+	private boolean suppressedOutput; // TODO Consume this flag somewhere
+
+	/**
+	 * Create a new RPMapEntity.
+	 * The suppressedOutput flag is always set to false.
+	 * @param symbol
+	 * @param entity
+	 * @param coordinate
+	 */
+	RPMapEntity(char symbol, E entity, RPCoordinate coordinate) {
+		this(symbol, entity, coordinate, false);
 	}
-	
-	public char getSymbol() {
+
+	/**
+	 * Create a new RPMapEntity
+	 * @param symbol
+	 * @param entity
+	 * @param coordinate
+	 * @param suppressedOutput Set to true to suppress output for batch messages, such as the legend of the RPMap
+	 */
+	RPMapEntity(char symbol, E entity, RPCoordinate coordinate, boolean suppressedOutput) {
+		this.entity = entity;
+
+		this.symbol = symbol;	//TODO Add support for 2D shape instead of single char
+								//TODO Add support for entity larger than 1 cell
+		this.name = entity.toString();
+		this.coordinate = coordinate;
+
+		this.suppressedOutput = suppressedOutput;
+	}
+
+	char getSymbol() {
 		return symbol;
 	}
 	
-	public void setSymbol(char symbol) {
+	void setSymbol(char symbol) {
 		this.symbol = symbol;
 	}
-	
-	public E getEntity() {
+
+	String getName() { return name; }
+
+	void setName(String name) { this.name = name; }
+
+	E getEntity() {
 		return entity;
 	}
 	
-	public void setEntity(E entity) {
+	void setEntity(E entity) {
 		this.entity = entity;
 	}
-	
-	/**
-	 * <p>Get a legend on what this map entity represents.
-	 * Returns a string with the output</p>
-	 * <p>symbol: entity</p>
-	 * <p>where symbol is the symbol representing this entity
-	 * and entity represents {@link #getEntity()} with the {@link #toString()} method invoked
-	 * @return The string representation of this entity in a legend or null if entity is set to null
-	 */
-	public String getLegend() {
-		if (entity == null) {
-			return null;
-		}
-		
-		return symbol + ": " + entity.toString();
+
+	RPCoordinate getCoordinate() {
+		return coordinate;
+	}
+
+	void setCoordinate(RPCoordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	boolean isSuppressedOutput() {
+		return suppressedOutput;
+	}
+
+	void setSuppressedOutput(boolean suppressedOutput) {
+		this.suppressedOutput = suppressedOutput;
 	}
 }

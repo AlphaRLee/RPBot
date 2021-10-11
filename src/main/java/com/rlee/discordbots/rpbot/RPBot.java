@@ -30,7 +30,10 @@ public class RPBot {
 
 	private static String TOKEN;
 	private static String commandPrefix;
-	
+
+	private static final String configDirectoryPath = "config";
+	private static final String configFilePath = configDirectoryPath + "/config.yml";
+
 	public static void main(String[] args) {
 		readConfig();	//Sets the TOKEN and the commandPrefix
 		startJDA();
@@ -38,12 +41,12 @@ public class RPBot {
 	}
 
 	private static void readConfig() {
-		File configDirectory = new File("config");
+		File configDirectory = new File(configDirectoryPath);
 		if (!configDirectory.exists() || !configDirectory.isDirectory()) {
 			configDirectory.mkdirs();
 		}
 		
-		File configFile = new File("config/config.yml");
+		File configFile = new File(configFilePath);
 		ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 		try {	
 			if (!configFile.exists()) {
@@ -69,10 +72,7 @@ public class RPBot {
 		try {
 			//Instantiate JDA api
 			jda = new JDABuilder(AccountType.BOT).setToken(TOKEN).buildBlocking(); 
-
-			jda.addEventListener(new MessageListener(commandPrefix)); // Add event listener
-														 // for messages
-
+			jda.addEventListener(new MessageListener(commandPrefix)); // Add event listener for messages
 			jda.getPresence().setGame(Game.playing("A Roleplay Attempt"));
 
 		} catch (LoginException | IllegalArgumentException | InterruptedException | RateLimitedException e) {
@@ -119,22 +119,5 @@ public class RPBot {
 	public static User selfUser() {
 		return jda.getSelfUser();
 	}
-	
-	public static String replaceWhitespaces(String string) {
-		return replaceWhitespaces(string, false);
-	}
-	
-	public static String replaceWhitespaces(String string, boolean toLowerCase) {
-		String output = string.trim().replace(' ', '-');
-		
-		if (toLowerCase) {
-			output = output.toLowerCase();
-		}
-		
-		return output;
-	}
-	
-	public static boolean isEmptyString(String string) {
-		return string == null || string.isEmpty();
-	}
+
 }

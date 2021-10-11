@@ -4,10 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.rlee.discordbots.rpbot.command.CommandParser;
+import com.rlee.discordbots.rpbot.map.MapCommandHandler;
 import com.rlee.discordbots.rpbot.dice.RollCalculator;
 import com.rlee.discordbots.rpbot.game.RPGame;
-import com.rlee.discordbots.rpbot.map.RPMap;
-import com.rlee.discordbots.rpbot.map.RPMapEntity;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
@@ -26,11 +25,12 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 public class MessageListener extends ListenerAdapter {
 
 	public static String COMMAND_PREFIX = "&";	//Official RPBot
-//	public static String COMMAND_PREFIX = "^";	//RPTester
 	private RollCalculator rollCalculator;
+	private MapCommandHandler mapCommandHandler;
 	
 	public MessageListener() {
 		rollCalculator = new RollCalculator();
+		mapCommandHandler = new MapCommandHandler();
 	}
 	
 	public MessageListener(String commandPrefix) {
@@ -70,7 +70,7 @@ public class MessageListener extends ListenerAdapter {
 
 			MessageBuilder outputBuilder = new MessageBuilder();
 			outputBuilder.append(output);
-			// outputBuilder.setColor(Color.ORANGE);
+//			outputBuilder.setColor(Color.ORANGE);
 
 			channel.sendMessage(outputBuilder.build()).queue();
 		}
@@ -93,7 +93,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		String[] args = content.split(" ");
 		
-		if (args.length < 1 || RPBot.isEmptyString(content)) {
+		if (args.length < 1 || Util.isEmptyString(content)) {
 			return; //Nothing placed after command prefix!
 		}
 		
@@ -111,7 +111,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		
 		case "alias": case "multialias": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias name", "full name"}, new String[] {"alias 2", "full 2", "alias 3", "full 3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name", "full\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
 				break;
 			}
 			
@@ -134,7 +134,7 @@ public class MessageListener extends ListenerAdapter {
 		}	
 		case "list": {
 			if (game.getProfileRegistry().getProfilesByName().isEmpty()) {
-				channel.sendMessage("No characters have been added yet! Try using " + COMMAND_PREFIX + "addchar").queue();
+				channel.sendMessage("No characters have been added yet! Try using `" + COMMAND_PREFIX + "addchar`").queue();
 				break;
 			}
 			
@@ -146,7 +146,7 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "listchar": {
 			CharProfile profile = null;
-			if (args.length >= 2 && !RPBot.isEmptyString(args[1])) {
+			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
 				 profile = game.getProfileRegistry().getProfile(args[1]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -162,12 +162,12 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "listattr": case "listattribute": case "attr": case "attribute": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias name"}, new String[] {"alias 2", "full 2", "alias 3", "full 3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
 				break;
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 3 && !RPBot.isEmptyString(args[2])) {
+			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
 				 profile = game.getProfileRegistry().getProfile(args[2]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -190,7 +190,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "addcharid": case "addcharfromid": case "addcharacterfromid": {
-			if (!cmdParser.validateParameterLength(new String[] {"#channel", "message ID"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"#channel", "message\\_ID"})) {
 				break;
 			}
 			
@@ -216,7 +216,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "delchar": case "deletecharacter": {
-			if (!cmdParser.validateParameterLength(new String[] {"name"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"character"})) {
 				break;
 			}
 			
@@ -235,7 +235,7 @@ public class MessageListener extends ListenerAdapter {
 		}
 		case "save": case "savechar": {
 			CharProfile profile = null;
-			if (args.length >= 2 && !RPBot.isEmptyString(args[1])) {
+			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
 				profile = game.getProfileRegistry().getProfile(args[1]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -266,12 +266,12 @@ public class MessageListener extends ListenerAdapter {
 			 * Eg: &set stam 20/30 Bob
 			 */
 			
-			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, new String[] {"\b/maxvalue", "character"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, new String[] {"\b/max\\_value", "character"})) {
 				break;
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 4 && !RPBot.isEmptyString(args[3])) {
+			if (args.length >= 4 && !Util.isEmptyString(args[3])) {
 				 profile = game.getProfileRegistry().getProfile(args[3]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -329,7 +329,7 @@ public class MessageListener extends ListenerAdapter {
 			}
 			
 			CharProfile profile = null;
-			if (args.length >= 3 && !RPBot.isEmptyString(args[2])) {
+			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
 				profile = game.getProfileRegistry().getProfile(args[2]);
 			} else {
 				profile = game.getProfileRegistry().getProfile(member);
@@ -349,25 +349,16 @@ public class MessageListener extends ListenerAdapter {
 			profile.removeAttribute(attribute);
 			channel.sendMessage("The attribute **" + attribute.getName() + "** has been removed from **" + profile.getName() + "**.").queue();
 			break;
-		}	
+		}
+		case "map": case "m": {
+			mapCommandHandler.handleCommand(args, member, game, channel);
+			break;
+		}
 		//TODO Delete these test cases
 		case "guildid": {
 			channel.sendMessage("The guild ID is: " + game.getGuild().getId()).queue();
 			break;
 		}
-		case "map": {
-			RPMap rpMap = new RPMap();
-			rpMap.setAt(3, 3, new RPMapEntity<String>('c', "Camel"));
-			rpMap.setAt(4, 0, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(5, 1, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(6, 2, new RPMapEntity<String>('/', "Wall"));
-			rpMap.setAt(7, 3, new RPMapEntity<String>('-', "Wall"));
-			rpMap.setAt(7, 4, new RPMapEntity<String>('\u2588', "Wall"));
-			rpMap.setAt(6, 4, new RPMapEntity<String>('\u2588', "Wall"));
-			rpMap.setAt(6, 5, new RPMapEntity<String>('\u2588', "Wall"));
-			channel.sendMessage("TEST Map generated:\n" + rpMap.showMap()).queue();
-		}
-		
 		}
 		
 		//Cases for "+" and "-" commands:
@@ -378,8 +369,8 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		if (lowerCommand.startsWith("addchar") || lowerCommand.startsWith("addcharacter")) {
-			if (args.length <= 1 || content.split("\n").length <= 1) {
-				channel.sendMessage("Format: " + COMMAND_PREFIX + args[0] + "\nName: <name>\n<attribute name>: <attribute value>\n...").queue();
+			if (args.length <= 1 || content.split("\n").length <= 1) { // TODO Convert to use the cmdParser
+				channel.sendMessage("Usage: `" + COMMAND_PREFIX + args[0] + "\nName: <name>\n<attribute_name>: <attribute_value>\n<attribute_name>: <attribute_value>\n...`").queue();
 				return;
 			}
 					
@@ -414,7 +405,7 @@ public class MessageListener extends ListenerAdapter {
 	
 	private void claimProfileCmd(String[] args, Member member, RPGame game, MessageChannel channel) {
 		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
-		if (!cmdParser.validateParameterLength(new String[] {"profile name"})) {
+		if (!cmdParser.validateParameterLength(new String[] {"character"})) {
 			return;
 		}
 		
@@ -458,7 +449,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		channel.sendMessage(member.getAsMention() + " has unclaimed the character profile **" + profile.getName() + "**.").queue();
 	}
-	
+
 	/**
 	 * Add the numeric value from args[0] into the attribute from args[1] 
 	 * @param args arguments passed in the order of operation, attribute name, duration (optional) and profile name (optional)
@@ -487,10 +478,10 @@ public class MessageListener extends ListenerAdapter {
 		Attribute attribute = null;
 		int duration = INVALID_VAL;
 		CharProfile profile = game.getProfileRegistry().getProfile(member);
-		
-		
+
 		if (args.length < ATTR_ARG + 1) {
-			channel.sendMessage("Format: " + COMMAND_PREFIX + args[OPERATOR_ARG] + " <attribute> [duration] [character]").queue();
+			// TODO Refactor to use cmdParser
+			channel.sendMessage("Usage: `" + COMMAND_PREFIX + args[OPERATOR_ARG] + " <attribute> [duration] [character]`").queue();
 			return;
 		}
 		
@@ -564,7 +555,7 @@ public class MessageListener extends ListenerAdapter {
 		
 		if (signCount >= operatorArgLength) {
 			//Entire string is just operator, no number
-			channel.sendMessage("Please add a number to the end of your operation! Eg. " + COMMAND_PREFIX + "+1").queue();
+			channel.sendMessage("Please add a number to the end of your operation! Eg. `" + COMMAND_PREFIX + "+1`").queue();
 			return;
 		}
 		
@@ -602,7 +593,8 @@ public class MessageListener extends ListenerAdapter {
 	 * @return
 	 *
 	 * @author R Lee
-	 * 
+	 *
+	 * TODO Delete method
 	 * @deprecated Convention: All args should be passed, including command arg - RLee 16/06/2018
 	 */
 	@Deprecated

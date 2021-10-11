@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.rlee.discordbots.rpbot.RPBot;
+import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.AttributeAlreadyExistsException;
 import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
@@ -150,7 +151,7 @@ public class ProfileReader {
 	}
 	
 	private CharProfile readProfile(String source, ProfileRegistry registry) {
-		if (RPBot.isEmptyString(source) || registry == null) {
+		if (Util.isEmptyString(source) || registry == null) {
 			return null;
 		}
 		
@@ -197,7 +198,7 @@ public class ProfileReader {
 			return null; // Skip lines that haven't been split
 		}
 		
-		if (args.get(KEY).isEmpty() || RPBot.replaceWhitespaces(args.get(VAL)).isEmpty()) {
+		if (args.get(KEY).isEmpty() || Util.replaceWhitespaces(args.get(VAL)).isEmpty()) {
 			return null; // Skip invalid entries (eg. "Key : : 3")
 			// For more than 2 args, simply ignore trailing args
 			// during operations
@@ -205,7 +206,7 @@ public class ProfileReader {
 
 		// Remove leading/tailing whitespace, replace spaces in middle with
 		// underscore, and make all chars lowercase on the key
-		args.set(KEY, RPBot.replaceWhitespaces(args.get(KEY), true));
+		args.set(KEY, Util.replaceWhitespaces(args.get(KEY), true));
 		// Do NOT edit innerArgs.get(VAL) until innerArgs[MAX_VAL] is
 		// extracted, if applicable
 		
@@ -214,7 +215,7 @@ public class ProfileReader {
 		}
 		
 		//Remove white spaces
-		args.set(VAL, RPBot.replaceWhitespaces(args.get(VAL)));
+		args.set(VAL, Util.replaceWhitespaces(args.get(VAL)));
 		
 		// Remove leading '+' symbols if applicable (lenient conversion from
 		// string to int)
@@ -273,12 +274,12 @@ public class ProfileReader {
 			
 			if (args.length >= 2
 					&& args[KEY].equalsIgnoreCase("name") 
-					&& !RPBot.isEmptyString(args[VAL])) {
+					&& !Util.isEmptyString(args[VAL])) {
 				// The arg can be split by the delimiter
 				// AND the arg starts with the word "name"
 				// AND the value for the name is not empty
 				
-				profile.setName(RPBot.replaceWhitespaces(args[VAL]));
+				profile.setName(Util.replaceWhitespaces(args[VAL]));
 			}
 		}
 	}
@@ -312,15 +313,15 @@ public class ProfileReader {
 		}
 		
 		args[NAME] = args[NAME].trim();
-		if (RPBot.isEmptyString(args[NAME])) {
+		if (Util.isEmptyString(args[NAME])) {
 			return;
 		}
 		
 		String[] usernameArgs = args[NAME].split("#");
-		if (usernameArgs.length <= 0 || RPBot.isEmptyString(usernameArgs[0])) {
+		if (usernameArgs.length <= 0 || Util.isEmptyString(usernameArgs[0])) {
 			return;
 		}
-		boolean discriminatorProvided = usernameArgs.length >= 2 && !RPBot.isEmptyString(usernameArgs[1]);
+		boolean discriminatorProvided = usernameArgs.length >= 2 && !Util.isEmptyString(usernameArgs[1]);
 		
 		Guild guild = profile.getProfileRegistry().getGame().getGuild();
 		List<Member> members = guild.getMembersByName(usernameArgs[0], true);
