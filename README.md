@@ -225,3 +225,6 @@ DemoMap:
 > `Y` - Yak [**H1**]  
 > `Z` - Zebra [**A1**]  
 > `█` - Wall-1 [**E8**], Wall-2 [**E7**], Wall-3 [**F7**]  
+
+## How to build
+This project is created using Maven. To compile into a standalone jar, use `mvn clean package` and check the `target` folder
