@@ -58,7 +58,7 @@ Examples:
 **Example With Temporary Modifier**
 
 Assumptions:
-* `Char1` and `Char2` an attribute called `agility` (alias `agi) set to 2 and 4 respectively
+* `Char1` and `Char2` an attribute called `agility` (alias `agi`) set to 2 and 4 respectively
 * `Char1` has a +3 modifier for 2 more rolls on their `agility` attribute
 
 Example:  
@@ -127,12 +127,12 @@ stamina: 100/100
 ### `addcharacterfromid #<channel-name> <numeric_message_id>`
 Alias `&addcharfromid`, `&addcharid`
 
-**Note**: To find your message ID, do one of following:
-
 Create a character from an existing Discord message sent.
 The `#<channel-name>` is the name of the channel that the command was sent from (use Discord's `#` feature to write the channel's name).
 The `<numeric_message_id>` is the ID of the message with your character's information. See below for how to get the ID.
 The required arguments (i.e. the `Name` and attributes) are identical to the command `&addchar`.
+
+**Note**: To find your message ID, do one of following:
 
 _Option 1: Message ID from message link_
 1. Right-click the message/open the **More** option on your message and press **Copy message link**.
