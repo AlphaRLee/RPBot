@@ -141,7 +141,7 @@ public class MessageListener extends ListenerAdapter {
 			}
 			break;
 		}
-		case "listchar": {
+		case "listchar": case "char": {
 			CharProfile profile = null;
 			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
 				 profile = game.getProfileRegistry().getProfile(args[1]);
@@ -251,7 +251,7 @@ public class MessageListener extends ListenerAdapter {
 			claimProfileCmd(args, member, game, channel);
 			break;
 		}
-		case "unclaim": {
+		case "unclaim": case "unclaimchar": {
 			unclaimProfileCmd(member, game, channel);
 			break;
 		}
@@ -582,25 +582,5 @@ public class MessageListener extends ListenerAdapter {
 		}
 	
 		channel.sendMessage(output).queue();
-	}
-	
-	/**
-	 * Get the 2nd (index of 1) arg and all args following that one; get the parameters
-	 * @param args
-	 * @return
-	 *
-	 * @author R Lee
-	 *
-	 * TODO Delete method
-	 * @deprecated Convention: All args should be passed, including command arg - RLee 16/06/2018
-	 */
-	@Deprecated
-	public static String[] paramArgs(String[] args)
-	{
-		//For Arrays.copyOfRange:
-		//1st parameter: Original array list
-		//2nd parameter: From index (inclusive)
-		//3rd parameter: To index (exclusive)
-		return Arrays.copyOfRange(args, 1, args.length);
 	}
 }
