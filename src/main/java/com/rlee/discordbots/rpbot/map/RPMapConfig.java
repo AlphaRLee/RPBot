@@ -13,7 +13,7 @@ import java.io.IOException;
  * A general class for holding configuration for RPMaps, based per RPGame
  */
 public class RPMapConfig {
-	private String configFilePath;
+	private final String configFilePath;
 
 	private int rowCount, colCount;
 	private int rowHeight, colWidth;

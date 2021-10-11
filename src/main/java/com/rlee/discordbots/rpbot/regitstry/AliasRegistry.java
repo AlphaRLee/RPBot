@@ -66,30 +66,6 @@ public class AliasRegistry {
 	 * @author R Lee
 	 */
 	public Attribute getAttribute(String attributeName, CharProfile profile) {
-//		if (RPBot.isEmptyString(attributeName) || profile == null) {
-//			return null;
-//		}
-//		
-//		Integer value = profile.getAttribute(attributeName);
-//		
-//		if (value == null) {
-//			int count = 0;
-//			final int MAX_COUNT = 50;
-//			
-//			String nameAttempt = getFull(attributeName);
-//			
-//			//Chain-traverse down list of names (eg. comm -> com -> communication)
-//			while (value == null && nameAttempt != null && count < MAX_COUNT) {
-//				value = profile.getAttribute(nameAttempt);
-//				nameAttempt = getFull(nameAttempt);
-//				count++;
-//			}
-//		}
-//		
-//		return value;
-		
-		//TODO: TEST BELOW CODE SEGMENT AND DELETE ABOVE SEGMENT
-		
 		String fullAttr = getAttributeName(attributeName, profile);
 		if (Util.isEmptyString(fullAttr)) {
 			return null;

@@ -272,6 +272,8 @@ Currently, `&++` and `&--` variants on the command function identically to `&+` 
 * `&+1 str 3` - Add a temporary fixed buff of +1 to the next 3 rolls for `str` for this user
 * `&-2 str 4 char2` - Add a temporary fixed debuff of -2 to the next 4 rolls for the `str` for `Char2`
 
+## Map commands
+TBD
 
 ## Administrative Commands
 ### `&alias <alias_name> <full_name> [<alias_name2> <full_name2>] [<alias_name3> <full_name3>]...`

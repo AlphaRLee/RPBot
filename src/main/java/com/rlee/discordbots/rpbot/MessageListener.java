@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import sun.java2d.cmm.Profile;
 
 public class MessageListener extends ListenerAdapter {
 
@@ -113,7 +114,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		
 		case "alias": case "multialias": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name", "full\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name", "full\\_name"}, "alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "...")) {
 				break;
 			}
 			
@@ -147,15 +148,8 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "listchar": case "char": {
-			CharProfile profile = null;
-			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
-				 profile = game.getProfileRegistry().getProfile(args[1]);
-			} else {
-				profile = game.getProfileRegistry().getProfile(member);
-			}
-			
+			CharProfile profile = getProfileOrSendError(args.length > 1 ? args[1] : null, game, member, channel);
 			if (profile == null) {
-				channel.sendMessage("No character profile found!").queue();
 				break;
 			}
 			
@@ -164,24 +158,16 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "listattr": case "listattribute": case "attr": case "attribute": {
-			if (!cmdParser.validateParameterLength(new String[] {"alias\\_name"}, new String[] {"alias\\_2", "full\\_2", "alias\\_3", "full\\_3", "..."})) {
+			if (!cmdParser.validateParameterLength(new String[] {"attribute"}, "character")) {
 				break;
 			}
-			
-			CharProfile profile = null;
-			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
-				 profile = game.getProfileRegistry().getProfile(args[2]);
-			} else {
-				profile = game.getProfileRegistry().getProfile(member);
-			}
-			
+
+			CharProfile profile = getProfileOrSendError(args.length > 2 ? args[2] : null, game, member, channel);
 			if (profile == null) {
-				channel.sendMessage("No character profile found!").queue();
 				break;
 			}
 			
 			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
-			
 			if (attribute == null) {
 				channel.sendMessage("No attribute found by the name: **" + args[1] + "** for " + profile.getName() + ".").queue();
 				break;
@@ -195,7 +181,7 @@ public class MessageListener extends ListenerAdapter {
 			if (!cmdParser.validateParameterLength(new String[] {"#channel", "message\\_ID"})) {
 				break;
 			}
-			
+
 			List<TextChannel> mentionedChannels = message.getMentionedChannels();
 			if (mentionedChannels.isEmpty()) {
 				event.getChannel().sendMessage("Sorry, you must mention a **#channel** to read the profile from!").queue();
@@ -221,9 +207,9 @@ public class MessageListener extends ListenerAdapter {
 			if (!cmdParser.validateParameterLength(new String[] {"character"})) {
 				break;
 			}
-			
+
+			// Explicitly check for profile here - not an optional param
 			CharProfile profile = game.getProfileRegistry().getProfile(args[1]);
-			
 			if (profile == null) {
 				channel.sendMessage("No character profile found.").queue();
 				break;
@@ -236,15 +222,8 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "save": case "savechar": {
-			CharProfile profile = null;
-			if (args.length >= 2 && !Util.isEmptyString(args[1])) {
-				profile = game.getProfileRegistry().getProfile(args[1]);
-			} else {
-				profile = game.getProfileRegistry().getProfile(member);
-			}
-			
+			CharProfile profile = getProfileOrSendError(args.length > 1 ? args[1] : null, game, member, channel);
 			if (profile == null) {
-				channel.sendMessage("No character profile found!").queue();
 				break;
 			}
 			
@@ -253,11 +232,11 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "claim": case "claimchar": {
-			claimProfileCmd(args, member, game, channel);
+			claimProfileCmd(args, game, channel, message);
 			break;
 		}
 		case "unclaim": case "unclaimchar": {
-			unclaimProfileCmd(member, game, channel);
+			unclaimProfileCmd(args, game, channel, message);
 			break;
 		}
 		case "set": case "setattr": {
@@ -268,22 +247,15 @@ public class MessageListener extends ListenerAdapter {
 			 * Eg: &set stam 20/30 Bob
 			 */
 			
-			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, new String[] {"\b/max\\_value", "character"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, "\b/max\\_value", "character")) {
 				break;
 			}
-			
-			CharProfile profile = null;
-			if (args.length >= 4 && !Util.isEmptyString(args[3])) {
-				 profile = game.getProfileRegistry().getProfile(args[3]);
-			} else {
-				profile = game.getProfileRegistry().getProfile(member);
-			}
-			
+
+			CharProfile profile = getProfileOrSendError(args.length > 3 ? args[3] : null, game, member, channel);
 			if (profile == null) {
-				channel.sendMessage("No character profile found!").queue();
 				break;
 			}
-			
+
 			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
 			if (attribute == null) {	
 				//Insert a new attribute
@@ -326,22 +298,15 @@ public class MessageListener extends ListenerAdapter {
 			 * Delete an attribute from a profile
 			 * &delattr <attribute> <player>
 			 */
-			if (!cmdParser.validateParameterLength(new String[] {"attribute"}, new String[] {"character"})) {
+			if (!cmdParser.validateParameterLength(new String[] {"attribute"}, "character")) {
 				return;
 			}
-			
-			CharProfile profile = null;
-			if (args.length >= 3 && !Util.isEmptyString(args[2])) {
-				profile = game.getProfileRegistry().getProfile(args[2]);
-			} else {
-				profile = game.getProfileRegistry().getProfile(member);
-			}
-			
+
+			CharProfile profile = getProfileOrSendError(args.length > 2 ? args[2] : null, game, member, channel);
 			if (profile == null) {
-				channel.sendMessage("No character profile found!").queue();
 				break;
 			}
-			
+
 			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
 			if (attribute == null) {
 				channel.sendMessage("No attribute found by the name: **" + args[1] + "** for " + profile.getName() + ".").queue();
@@ -405,12 +370,17 @@ public class MessageListener extends ListenerAdapter {
 		event.getChannel().sendMessage("Character profiles read from " + mentionedChannels.get(0).getAsMention() + "!").queue();
 	}
 	
-	private void claimProfileCmd(String[] args, Member member, RPGame game, MessageChannel channel) {
+	private void claimProfileCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
 		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
-		if (!cmdParser.validateParameterLength(new String[] {"character"})) {
+		if (!cmdParser.validateParameterLength(new String[] {"character"}, "@User")) {
 			return;
 		}
-		
+
+		Member member = getMemberOrSendError(message, channel, args.length > 2 ? args[2] : null);
+		if (member == null) {
+			return;
+		}
+
 		CharProfile profile = game.getProfileRegistry().getProfile(args[1]);
 		if (profile == null) {
 			channel.sendMessage("No character profile was found by the name of **" + args[1] + "**.").queue();
@@ -438,8 +408,13 @@ public class MessageListener extends ListenerAdapter {
 		return;
 	}
 	
-	private void unclaimProfileCmd(Member member, RPGame game, MessageChannel channel) {
-		if (member == null || channel == null) {
+	private void unclaimProfileCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
+		if (channel == null) {
+			return;
+		}
+
+		Member member = getMemberOrSendError(message, channel, args.length > 1 ? args[1] : null);
+		if (member == null) {
 			return;
 		}
 		
@@ -503,7 +478,7 @@ public class MessageListener extends ListenerAdapter {
 			
 			if (args.length >= PROFILE_ARG + 1) {
 				if (duration == INVALID_VAL) {
-					//Profile was specifed and duration is invalid. Send error
+					//Profile was specified and duration is invalid. Send error
 					channel.sendMessage("Format: " + args[OPERATOR_ARG] + " <attribute> [duration] [character]").queue();
 					return;
 				}
@@ -516,19 +491,12 @@ public class MessageListener extends ListenerAdapter {
 				}
 			}
 		}
-		
-		if (profileArg != INVALID_VAL) {
-			profile = game.getProfileRegistry().getProfile(args[profileArg]);
-		} else {
-			profile = game.getProfileRegistry().getProfile(member); //Get default profile name by member
-		}
-		
-		//Validate profile
+
+		profile = getProfileOrSendError(profileArg != INVALID_VAL ? args[profileArg] : null, game, member, channel);
 		if (profile == null) {
-			channel.sendMessage("No character profile found!").queue();
 			return;
 		}
-		
+
 		//TODO: Add attr if attr is missing from profile
 		attribute = game.getAliasRegistry().getAttribute(args[ATTR_ARG], profile);
 		if (attribute == null) {
@@ -587,5 +555,47 @@ public class MessageListener extends ListenerAdapter {
 		}
 	
 		channel.sendMessage(output).queue();
+	}
+
+	private CharProfile getProfileOrSendError(String profileName, RPGame game, Member member, MessageChannel channel) {
+		CharProfile profile;
+		if (Util.isEmptyString(profileName)) {
+			profile = game.getProfileRegistry().getProfile(member);
+			if (profile == null) {
+				channel.sendMessage("No character profile found!").queue();
+			}
+		} else {
+			profile = game.getProfileRegistry().getProfile(profileName);
+			if (profile == null) {
+				channel.sendMessage("No character profile was found by the name of **" + profileName + "**!").queue();
+			}
+		}
+
+		return profile;
+	}
+
+	/**
+	 * Get the targeted member
+	 * @param message The sent message
+	 * @param channel The channel the message was sent from
+	 * @param memberName The name of the member to get. If null then uses the sender of the message
+	 * @return The targeted member or null if no member found
+	 */
+	private Member getMemberOrSendError(Message message, MessageChannel channel, String memberName) {
+		Member member = null;
+		if (!Util.isEmptyString(memberName)) {
+			List<Member> mentionedMembers = message.getMentionedMembers();
+			if (!mentionedMembers.isEmpty()) {
+				member = mentionedMembers.get(0);
+			}
+		} else {
+			member = message.getMember();
+		}
+
+		if (member == null) {
+			channel.sendMessage("No Discord user was found by the name of **" + memberName + "**.").queue();
+		}
+
+		return member;
 	}
 }

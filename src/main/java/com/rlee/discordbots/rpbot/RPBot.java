@@ -8,6 +8,7 @@ import java.util.List;
 import javax.security.auth.login.LoginException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -28,6 +29,7 @@ public class RPBot {
 
 	private static String TOKEN;
 	private static String commandPrefix;
+	private static String activity = "A Roleplay Attempt";
 
 	private static final String configDirectoryPath = "config";
 	private static final String configFilePath = configDirectoryPath + "/config.yml";
@@ -53,13 +55,20 @@ public class RPBot {
 			if (!configFile.exists()) {
 				throw new FileNotFoundException("Please create a file named config/config.yml with the following lines within: "
 						+ "token: \"YOUR DISCORD BOT TOKEN\""
-						+ "prefix: \"YOUR COMMAND PREFIX HERE\"");
+						+ "prefix: \"YOUR COMMAND PREFIX HERE\""
+						+ "activity: \"DISCORD BOT ACTIVITY HERE\"");
 			}
 			
 			ObjectNode root = (ObjectNode) yamlMapper.readTree(configFile);
 			TOKEN = yamlMapper.treeToValue(root.get("token"), String.class);
 			commandPrefix = yamlMapper.treeToValue(root.get("prefix"), String.class);
-			
+
+			// Optional nodes
+			JsonNode activityNode = root.get("activity");
+			if (activityNode != null) {
+				activity = yamlMapper.treeToValue(activityNode, String.class);
+			}
+
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -73,7 +82,7 @@ public class RPBot {
 		try {
 			//Instantiate JDA api
 			JDABuilder builder = JDABuilder.createDefault(TOKEN);
-			builder.setActivity(Activity.playing("A Roleplay Attempt"));
+			builder.setActivity(Activity.playing(activity));
 			jda = builder.build().awaitReady();
 			jda.addEventListener(new MessageListener(commandPrefix)); // Add event listener for messages
 		} catch (LoginException | IllegalArgumentException | InterruptedException e) {

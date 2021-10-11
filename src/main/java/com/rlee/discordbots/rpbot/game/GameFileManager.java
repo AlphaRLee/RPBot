@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import com.rlee.discordbots.rpbot.map.RPMapConfig;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
+import com.rlee.discordbots.rpbot.reader.AliasReader;
 import com.rlee.discordbots.rpbot.reader.ProfileReader;
 
 public class GameFileManager {
@@ -61,8 +62,12 @@ public class GameFileManager {
 	void loadConfig() {
 		// Presently only maps have config
 		try {
-			System.out.println("Now reading: " + configFilePath); // FIXME delete test code
+			// Read config data for map
 			game.getMapConfig().readMapConfigFromFile();
+
+			//Read config data for aliases
+			AliasReader aliasReader = new AliasReader(game.getAliasRegistry());
+			aliasReader.readAliasesFromFile(configFilePath);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
