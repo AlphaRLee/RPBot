@@ -1,6 +1,12 @@
 # RPBot Commands
 The prefix for this bot is `&`
 
+## General
+### `&help`
+Alias `&?`
+
+Sends a link to this document
+
 ## Dice roll commands
 ### `&roll <expression> [character]`
 Alias `&r`

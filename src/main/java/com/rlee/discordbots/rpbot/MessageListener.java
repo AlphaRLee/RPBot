@@ -103,6 +103,11 @@ public class MessageListener extends ListenerAdapter {
 		CommandParser cmdParser = new CommandParser(args, channel);
 		String lowerCommand = args[COMMAND_ARG].toLowerCase();
 		switch (lowerCommand) {
+		case "help": case "?": {
+			cmdParser.setErrorDescription("https://github.com/AlphaRLee/RPBot/blob/main/Commands.md");
+			cmdParser.sendUserError("Please visit the following link for help:");
+			break;
+		}
 		case "roll": case "r":
 			rollCalculator.compute(content.substring(args[COMMAND_ARG].length()), channel, event.getAuthor(), true);
 			break;
