@@ -557,6 +557,15 @@ public class MessageListener extends ListenerAdapter {
 		channel.sendMessage(output).queue();
 	}
 
+	/**
+	 * Get the profile based on the profile name. If profileName is empty string or null, tries to find the profile claimed by the member.
+	 * Sends an error message to the channel if no profile can be found.
+	 * @param profileName Name of profile to find. Case-insensitive. If set to nul or empty string, uses member's profile if available
+	 * @param game Game to get profile from
+	 * @param member Member sending message
+	 * @param channel Channel to send error message to
+	 * @return Profile or null if none found
+	 */
 	private CharProfile getProfileOrSendError(String profileName, RPGame game, Member member, MessageChannel channel) {
 		CharProfile profile;
 		if (Util.isEmptyString(profileName)) {
