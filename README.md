@@ -125,7 +125,7 @@ He quickly checks his defense attribute
 
 The slime attacks! It unexpectedly jumps at Lance, so it gets +3 for surprise!
 ```
-&r str + 3
+&r str + 3 slime
 ```
 > Slime rolled **14**. (9 + 2 + 3)
 
