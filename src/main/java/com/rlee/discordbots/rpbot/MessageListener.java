@@ -97,7 +97,8 @@ public class MessageListener extends ListenerAdapter {
 		RPGame game = RPBot.getGame(event.getGuild());
 		
 		if (game == null) {
-			return; //TODO: Add some error dialogue here
+			channel.sendMessage("Sorry, you need to set up your game before you can play. Please contact the developer!").queue();
+			return;
 		}
 		
 		CommandParser cmdParser = new CommandParser(args, channel);
@@ -109,7 +110,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "roll": case "r":
-			rollCalculator.compute(content.substring(args[COMMAND_ARG].length()), channel, event.getAuthor(), true);
+			rollCalculator.compute(content.substring(args[COMMAND_ARG].length()), channel, message, true);
 			break;
 		
 		case "alias": case "multialias": {

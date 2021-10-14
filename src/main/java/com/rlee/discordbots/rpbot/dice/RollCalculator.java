@@ -13,6 +13,8 @@ import com.rlee.discordbots.rpbot.profile.Attribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
@@ -22,7 +24,8 @@ public class RollCalculator {
 	private static final int DEFAULT_RANGE = 20;
 	
 	/**
-	 * Calculate the roll outcome and output it to the specified channel
+	 * Calculate the roll outcome and output it to the specified channel.
+	 * Note: This command is only supported when sent through a guild with a registered game
 	 * @param expression
 	 * @param channel
 	 * @param author
@@ -30,8 +33,9 @@ public class RollCalculator {
 	 *
 	 * @author R Lee
 	 */
-	public void compute(String expression, MessageChannel channel, User author, boolean rollAttribute) {
+	public void compute(String expression, MessageChannel channel, Message message, boolean rollAttribute) {
 		List<Integer> numbers = new LinkedList<>();
+		User author = message.getAuthor();
 		String sender = author.getAsMention();
 		boolean inGame = channel instanceof TextChannel;
 		
@@ -47,11 +51,15 @@ public class RollCalculator {
     		}
     		
     		expression = expression.trim();
-    		
+
+    		// FIXME: Refactor into a function
     		getProfile: if (inGame) {
     			ProfileRegistry profileRegistry = game.getProfileRegistry();
-    			profile = profileRegistry.getProfile(game.getGuild().getMember(author));
-    			
+
+    			// Based on how JDA caches guild members, members need to be loaded directly from the message itself
+    			Member authorMember = message.getMember();
+    			profile = profileRegistry.getProfile(authorMember);
+
     			int lastIndex = expression.lastIndexOf(' ');
     			
     			if (lastIndex == -1) {
@@ -81,7 +89,7 @@ public class RollCalculator {
     		for (int i = 0; i < args.length; i++) {
     			String[] innerArgs = args[i].split("\\-"); //Split along "-" character
     			
-    			if (i == 0 ) {
+    			if (i == 0) {
     				//Append default roll in front of first attr roll if applicable
     				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, true, true, aliasRegistry, quickAttributes));
     			} else {
@@ -265,7 +273,7 @@ public class RollCalculator {
 	 * @author R Lee
 	 */
 	private int getRandInt(int range) {
-		return (range > 0 ? ThreadLocalRandom.current().nextInt(range) + 1 : 0);
+		return range > 0 ? ThreadLocalRandom.current().nextInt(range) + 1 : 0;
 	}
 	
 	private CharProfile getProfile(String name, ProfileRegistry registry) {
