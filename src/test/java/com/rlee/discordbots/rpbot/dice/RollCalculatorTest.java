@@ -5,11 +5,9 @@ import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
@@ -18,12 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -40,6 +36,7 @@ public class RollCalculatorTest {
     @Mock private ThreadLocalRandom threadLocalRandom;
     @Mock private Guild guild;
     @Mock private RPGame game;
+    @Mock private RollConfig rollConfig;
     @Mock private AliasRegistry aliasRegistry;
     @Mock private ProfileRegistry profileRegistry;
     @Mock private CharProfile authorProfile;
@@ -82,7 +79,7 @@ public class RollCalculatorTest {
         mockPrinter(expectedOutput);
         try (MockedStatic<ThreadLocalRandom> threadLocalRandomClass = mockStatic(ThreadLocalRandom.class)) {
             threadLocalRandomClass.when(ThreadLocalRandom::current).thenReturn(threadLocalRandom);
-            rollCalculator.compute("", channel, message, true);
+            rollCalculator.compute("", channel, message);
         }
         verifyPrint(expectedOutput);
     }
@@ -90,6 +87,8 @@ public class RollCalculatorTest {
     @Test
     public void whenDiceGivenDiceUsed() {
         when(channel.getGuild()).thenReturn(guild);
+        when(game.getRollConfig()).thenReturn(rollConfig);
+        when(rollConfig.getRollAttribute()).thenReturn(false);
         when(game.getProfileRegistry()).thenReturn(profileRegistry);
         when(message.getMember()).thenReturn(authorMember);
         when(game.getAliasRegistry()).thenReturn(aliasRegistry);
@@ -105,7 +104,7 @@ public class RollCalculatorTest {
             threadLocalRandomClass.when(ThreadLocalRandom::current).thenReturn(threadLocalRandom);
             rpBot.when(() -> RPBot.getGame(guild)).thenReturn(game);
 
-            rollCalculator.compute(expression, channel, message, true);
+            rollCalculator.compute(expression, channel, message);
         }
         verifyPrint(expectedOutput);
     }

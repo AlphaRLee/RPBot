@@ -28,17 +28,17 @@ public class RollCalculator {
 	 * Note: This command is only supported when sent through a guild with a registered game
 	 * @param expression
 	 * @param channel
-	 * @param author
-	 * @param rollAttribute Set to true to roll a die for each attribute where the number of faces on die is the attribute value
+	 * @param message
 	 *
 	 * @author R Lee
 	 */
-	public void compute(String expression, MessageChannel channel, Message message, boolean rollAttribute) {
+	public void compute(String expression, MessageChannel channel, Message message) {
 		List<Integer> numbers = new LinkedList<>();
 		User author = message.getAuthor();
 		String sender = author.getAsMention();
 		boolean inGame = channel instanceof TextChannel;
-		
+		boolean rollAttribute = false; // By default, set rollAttribute to be false
+
 		if (!Util.isEmptyString(expression)) {
     		RPGame game = null;
     		CharProfile profile = null;
@@ -54,6 +54,8 @@ public class RollCalculator {
 
     		// FIXME: Refactor into a function
     		getProfile: if (inGame) {
+    			rollAttribute = game.getRollConfig().getRollAttribute();
+
     			ProfileRegistry profileRegistry = game.getProfileRegistry();
 
     			// Based on how JDA caches guild members, members need to be loaded directly from the message itself

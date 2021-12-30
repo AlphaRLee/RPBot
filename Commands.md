@@ -16,7 +16,9 @@ The `&roll` command allows you to roll any combination of the following expressi
     * Example: `2d6` rolls two 6-sided dice. `d20` rolls one 20-sided die.
 * **Fixed modifiers**, in the format `<n>` where `n` is any integer (note that floating point numbers have undefined behaviour)
     * Example: `5` rolls a constant 5 every time
-* **Character attributes**, in the format of `<attribute name>`, where `attribute name` is the number of sides on a single die.
+* **Character attributes**, in the format of `<attribute name>`, where `attribute name` is either:
+    * a fixed modifier (default), or
+    * the number of sides on a single die (edit server's config.yml file so that roll.rollAttribute = true)
   You can use aliases (if configured) instead of the full attribute name.  
   **Note**: If an attribute the first expression in the roll command, then a d20 will automatically be added.
 
@@ -48,12 +50,13 @@ Assumptions:
 * `Char1` and `Char2` has an attribute called `strength` (alias `str`) set to 5 and 3 respectively
 
 Examples:
-* `&roll strength` - Rolls d20 + d5. The d5 is based on `Char1` strength attribute of 5
-* `&r str` - Rolls d20 + d5. Alias for the command above
-* `&r str + 2` - Rolls d20 + d5 + 2. Adds a fixed bonus of 2
-* `&r strength char2` - Rolls d20 + d3. The d3 is based on `Char2` strength of 3. Note names are case-insensitive
-* `&r str + 2d4 + 1 char2` - Rolls d20 + d3 + two d4 + 1
-* `&r d10 + str + 2` - **Rolls d10 + d5 + 2.** When adding anything before the character's attribute, the default d20 is dropped
+* `&roll strength` - Rolls d20 + 5. The 5 is based on `Char1` strength attribute of 5
+  * With `roll.rollAttributes` enabled, rolls d20 + d5 instead
+* `&r str` - Rolls d20 + 5. Alias for the command above
+* `&r str + 2` - Rolls d20 + 5 + 2. Adds a fixed bonus of 2
+* `&r strength char2` - Rolls d20 + 3. The 3 is based on `Char2` strength of 3. Note names are case-insensitive
+* `&r str + 2d4 + 1 char2` - Rolls d20 + 3 + two d4 + 1
+* `&r d10 + str + 2` - **Rolls d10 + 5 + 2.** When adding anything before the character's attribute, the default d20 is dropped
 
 **Example With Temporary Modifier**
 
@@ -63,11 +66,12 @@ Assumptions:
 
 Example:  
 The following commands are ran sequentially. Note how commands 2 and 3 are added but have no effect on the sequence. 
-1. `&r agi` - Rolls d20 + d2 + 3. The +3 modifier from agility is added on top of the usual d20 and d2. The temporary modifier is decremented from 2 more rolls to just 1 more roll.
+1. `&r agi` - Rolls d20 + 2 + 3. The +3 modifier from agility is added on top of the usual d20 and d2. The temporary modifier is decremented from 2 more rolls to just 1 more roll.
+   * With `roll.rollAttributes` enabled, rolls d20 + d2 + 3 instead
 2. `&r` - _Rolls a d20, as usual. Has no effect on the temporary modifier because command does not include an `agi` expression_
 3. `&r agi char2` - _Rolls a d20 + d4, as usual. Has no effect on the temporary modifier because the temporary modifier belongs to `Char1` not `Char2`_
-4. `&r agi` - Rolls d20 + d2 + 3. Same as command 1, now the temporary modifier is decremented from 1 to 0 (i.e. it is removed)
-5. `&r agi` - Rolls d20 + d2. The +3 modifier is now removed so it has no effect.
+4. `&r agi` - Rolls d20 + 2 + 3. Same as command 1, now the temporary modifier is decremented from 1 to 0 (i.e. it is removed)
+5. `&r agi` - Rolls d20 + 2. The +3 modifier is now removed so it has no effect.
 
 
 ## Character Profile Commands
@@ -238,7 +242,7 @@ If an attribute has a maximum value, then the `&+` command will cap the increase
 This is useful for attributes like HP where you want to quickly give characters health but do not want to heal them past their maximum value.
 
 If you want to exceed the maximum value anyway, you can use `&++` instead, and the max value will be ignored.
-Currently, `&--` is also supported but functions identically to `&-`
+Currently, `&--` is also supported but functions identically to `&-`.
 
 **Basic Example**:
 * `&+1 strength` - Add 1 to the strength attribute of the current user

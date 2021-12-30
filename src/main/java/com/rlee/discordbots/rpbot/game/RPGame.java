@@ -1,5 +1,6 @@
 package com.rlee.discordbots.rpbot.game;
 
+import com.rlee.discordbots.rpbot.dice.RollConfig;
 import com.rlee.discordbots.rpbot.map.RPMapConfig;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.api.entities.Guild;
 public class RPGame {
 
 	private GameFileManager gameFileManager;
+	private RollConfig rollConfig;
 	private RPMapConfig mapConfig;
 
 	private GameRegistry gameRegistry;
@@ -31,6 +33,7 @@ public class RPGame {
 		aliasRegistry = new AliasRegistry(this);
 		mapRegistry = new MapRegistry(this);
 		gameFileManager = new GameFileManager(this);
+		rollConfig = gameFileManager.createRollConfig();
 		mapConfig = gameFileManager.createMapConfig();
 
 		gameFileManager.checkCreateFiles();
@@ -56,6 +59,10 @@ public class RPGame {
 
 	public MapRegistry getMapRegistry() {
 		return mapRegistry;
+	}
+
+	public RollConfig getRollConfig() {
+		return rollConfig;
 	}
 
 	public RPMapConfig getMapConfig() {

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import com.rlee.discordbots.rpbot.dice.RollConfig;
 import com.rlee.discordbots.rpbot.map.RPMapConfig;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
@@ -22,6 +23,10 @@ public class GameFileManager {
 		this.game = game;
 		gameDirectoryPath = "games/" + game.getGuild().getId();
 		configFilePath = gameDirectoryPath + "/config.yml";
+	}
+
+	RollConfig createRollConfig() {
+		return new RollConfig(configFilePath);
 	}
 
 	RPMapConfig createMapConfig() {
@@ -60,9 +65,10 @@ public class GameFileManager {
 	 * Load configuration settings for the particular game
 	 */
 	void loadConfig() {
-		// Presently only maps have config
+		// Presently only roll and map have config
 		try {
 			// Read config data for map
+			game.getRollConfig().readConfigFromFile();
 			game.getMapConfig().readMapConfigFromFile();
 
 			//Read config data for aliases
