@@ -238,7 +238,7 @@ If an attribute has a maximum value, then the `&+` command will cap the increase
 This is useful for attributes like HP where you want to quickly give characters health but do not want to heal them past their maximum value.
 
 If you want to exceed the maximum value anyway, you can use `&++` instead, and the max value will be ignored.
-Currently, `&--` is also supported but functions identically to `&-`
+Currently, `&--` is also supported but functions identically to `&-`.
 
 **Basic Example**:
 * `&+1 strength` - Add 1 to the strength attribute of the current user

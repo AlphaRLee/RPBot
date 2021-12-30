@@ -110,7 +110,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "roll": case "r":
-			rollCalculator.compute(content.substring(args[COMMAND_ARG].length()), channel, message, true);
+			rollCalculator.compute(content.substring(args[COMMAND_ARG].length()), channel, message);
 			break;
 		
 		case "alias": case "multialias": {
