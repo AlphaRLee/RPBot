@@ -6,6 +6,7 @@ import java.util.Map;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
+import com.rlee.discordbots.rpbot.profile.NumberAttribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 
 public class AliasRegistry {
@@ -65,7 +66,7 @@ public class AliasRegistry {
 	 *
 	 * @author R Lee
 	 */
-	public Attribute getAttribute(String attributeName, CharProfile profile) {
+	public Attribute<?> getAttribute(String attributeName, CharProfile profile) {
 		String fullAttr = getAttributeName(attributeName, profile);
 		if (Util.isEmptyString(fullAttr)) {
 			return null;

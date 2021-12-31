@@ -10,6 +10,7 @@ import com.rlee.discordbots.rpbot.RPBot;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
+import com.rlee.discordbots.rpbot.profile.NumberAttribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
@@ -42,12 +43,12 @@ public class RollCalculator {
 		if (!Util.isEmptyString(expression)) {
     		RPGame game = null;
     		CharProfile profile = null;
-    		Map<String, Attribute> quickAttributes = new HashMap<String, Attribute>(); //Quick list used to reduce attribute-searching
+    		Map<String, NumberAttribute> quickAttributes = new HashMap<String, NumberAttribute>(); // Quick list used to reduce attribute-searching
     		
     		if (inGame) {
-    			game = RPBot.getGame(((TextChannel) channel).getGuild()); //Get game from channel
+    			game = RPBot.getGame(((TextChannel) channel).getGuild()); // Get game from channel
     			
-    			inGame = (game != null); //Validate game exists
+    			inGame = (game != null); // Validate game exists
     		}
     		
     		expression = expression.trim();
@@ -65,12 +66,12 @@ public class RollCalculator {
     			int lastIndex = expression.lastIndexOf(' ');
     			
     			if (lastIndex == -1) {
-    				break getProfile; //Char does not occur
+    				break getProfile; // Char does not occur
     			}
     			
     			String endArg = expression.substring(lastIndex + 1);
     			
-    			//Try computing the arg. Search for empty array as indicator this is not a valid expression
+    			// Try computing the arg. Search for empty array as indicator this is not a valid expression
     			if (!computeArg(endArg, endArg.startsWith("\\-"), profile, rollAttribute, false, false, game.getAliasRegistry(), quickAttributes).isEmpty()) {
     				break getProfile;
     			}
@@ -78,35 +79,35 @@ public class RollCalculator {
     			profile = getProfile(endArg, profileRegistry);
     			
     			if (profile != null) {
-    				expression = expression.substring(0, lastIndex); //Get rid of profile name from rest of expression if profile was successfully found
+    				expression = expression.substring(0, lastIndex); // Get rid of profile name from rest of expression if profile was successfully found
     				sender = profile.getName();	
     			}
     		}
     		
-    		//Remove all whitespaces and split everything by the "+" character (will split by "-" later)
-    		//List<String> args = new ArrayList<String>(Arrays.asList(expression.replaceAll(" ", "").split("\\+")));
+    		// Remove all whitespaces and split everything by the "+" character (will split by "-" later)
+    		// List<String> args = new ArrayList<String>(Arrays.asList(expression.replaceAll(" ", "").split("\\+")));
     		String[] args = expression.replaceAll(" ", "").split("\\+");
     		AliasRegistry aliasRegistry = (inGame ? game.getAliasRegistry() : null);
    
     		for (int i = 0; i < args.length; i++) {
-    			String[] innerArgs = args[i].split("\\-"); //Split along "-" character
+    			String[] innerArgs = args[i].split("\\-"); // Split along "-" character
     			
     			if (i == 0) {
-    				//Append default roll in front of first attr roll if applicable
+    				// Append default roll in front of first attr roll if applicable
     				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, true, true, aliasRegistry, quickAttributes));
     			} else {
-    				//Not first roll, do not attach default roll
+    				// Not first roll, do not attach default roll
     				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, aliasRegistry, quickAttributes));
     			}
     			
-    			//Handle negative numbers
+    			// Handle negative numbers
     			for (int j = 1; j < innerArgs.length; j++) {
     				numbers.addAll(computeArg(innerArgs[j], true, profile, rollAttribute, aliasRegistry, quickAttributes));
     			}
     		}
     		
 		} else {
-			//Empty string
+			// Empty string
 			numbers.add(rollDefaultDie());
 		}
     		
@@ -123,7 +124,7 @@ public class RollCalculator {
 	 * @author R Lee
 	 */
 	private List<Integer> computeArg(String arg, boolean isNegative, CharProfile profile, boolean rollAttribute, 
-			AliasRegistry aliasRegistry, Map<String, Attribute> quickAttributes) {
+			AliasRegistry aliasRegistry, Map<String, NumberAttribute> quickAttributes) {
 		return computeArg(arg, isNegative, profile, rollAttribute, false, true, aliasRegistry, quickAttributes);
 	}
 	
@@ -140,23 +141,23 @@ public class RollCalculator {
 	 * @author R Lee
 	 */
 	private List<Integer> computeArg(String arg, boolean isNegative, CharProfile profile, boolean rollAttribute, boolean prependDefault, boolean padZero,
-			AliasRegistry aliasRegistry, Map<String, Attribute> quickAttributes) {
+			AliasRegistry aliasRegistry, Map<String, NumberAttribute> quickAttributes) {
 		if (Util.isEmptyString(arg)) {
 			return new LinkedList<Integer>();
 		}
 		
 		List<Integer> numbers = rollDice(arg, isNegative);
 		if (!numbers.isEmpty()) {
-			//Dice expression successfully rolled, terminate here
+			// Dice expression successfully rolled, terminate here
 			return numbers;
 		}
 		
 		if (prependDefault) {
-			numbers.add(rollDefaultDie()); //Inject a default roll if this is the only roll and not a dice expression
+			numbers.add(rollDefaultDie()); // Inject a default roll if this is the only roll and not a dice expression
 		}
 		
 		String name = arg.toLowerCase();
-		Attribute attribute = null;
+		Attribute<?> attribute = null;
 		
 		if (quickAttributes.containsKey(name)) {
 			attribute = quickAttributes.get(name);
@@ -164,15 +165,20 @@ public class RollCalculator {
 			attribute = aliasRegistry.getAttribute(name, profile);
 			
 			if (attribute != null) {
-				//Valid attribute, store the value
-				quickAttributes.put(name, attribute);
+				// Valid attribute, store the value
+				// FIXME: Remove hardcoded cast
+				if (attribute instanceof NumberAttribute) {
+					quickAttributes.put(name, (NumberAttribute) attribute);
+				}
 			}
 		}
-		
-		if (attribute != null) {
-			int attrVal = attribute.getValue();
+
+		// FIXME: Get rid of instanceof restriction
+		if (attribute != null && attribute instanceof NumberAttribute) {
+			NumberAttribute numberAttribute = (NumberAttribute) attribute;
+			int attrVal = numberAttribute.getValue();
 			
-			//Valid attribute, perform roll check and negative check
+			// Valid attribute, perform roll check and negative check
 			if (rollAttribute) {
 				attrVal = getRandInt(attrVal);
 			}
@@ -183,17 +189,17 @@ public class RollCalculator {
 			
 			numbers.add(attrVal);
 			
-			if (attribute.hasItemEffects()) { //Apply item effects
-				numbers.add(attribute.getItemEffectsSum());
+			if (numberAttribute.hasItemEffects()) { // Apply item effects
+				numbers.add(numberAttribute.getItemEffectsSum());
 			}
 			
-			if (attribute.hasBuff()) { //Apply buffs
-				numbers.add(attribute.getBuff());
-				attribute.decrementBuffDuration(true);
+			if (numberAttribute.hasBuff()) { // Apply buffs
+				numbers.add(numberAttribute.getBuff());
+				numberAttribute.decrementBuffDuration(true);
 			}
 		} else if (padZero) {
-			numbers.add(0); //Add an empty value to serve as a cue to the end user
-							//Only add zero if requested
+			numbers.add(0); // Add an empty value to serve as a cue to the end user
+							// Only add zero if requested
 		}
 		
 		return numbers;
@@ -220,8 +226,8 @@ public class RollCalculator {
 	 */
 	private List<Integer> rollDice(String diceExpression, boolean isNegative) {
 		final String DICE_CHAR = "d";
-		final int COUNT_ARG = 0; //Number of dice to roll
-		final int RANGE_ARG = 1; //Number of faces on dice
+		final int COUNT_ARG = 0; // Number of dice to roll
+		final int RANGE_ARG = 1; // Number of faces on dice
 		
 		List<Integer> values = new LinkedList<Integer>();
 		String[] args = diceExpression.split(DICE_CHAR);
@@ -233,7 +239,7 @@ public class RollCalculator {
 			return values;
 		}
 		
-		//Try getting the max count, if requested
+		// Try getting the max count, if requested
 		if (!Util.isEmptyString(args[COUNT_ARG])) {
     		try {
     			maxCount = Integer.parseInt(args[COUNT_ARG]);
@@ -243,12 +249,12 @@ public class RollCalculator {
 		}
 		
 		if (args.length <= 1) {
-			output = maxCount; //Interpreting expression like !roll d20 + 3, grabbing the 3
+			output = maxCount; // Interpreting expression like !roll d20 + 3, grabbing the 3
 			values.add((isNegative ? output * -1 : output));
 			return values;
 		}
 
-		//Try getting the range
+		// Try getting the range
 		try {
 			range = Integer.parseInt(args[RANGE_ARG]);
 		} catch (NumberFormatException e) {
@@ -297,7 +303,7 @@ public class RollCalculator {
 	}
 	
 	private void print(List<Integer> numbers, MessageChannel channel, String sender) {
-		 //Start message with sender name, or self mention
+		 // Start message with sender name, or self mention
 		String output = (sender != null && !sender.isEmpty() ? sender : RPBot.selfUser().getAsMention());
 		output += " rolled **" + getSum(numbers) + "**.";
 		
@@ -308,7 +314,7 @@ public class RollCalculator {
     			output += i + " + "; 
     		}
     		
-    		output = output.substring(0, output.length() - 3); //Get rid of " + " on the end
+    		output = output.substring(0, output.length() - 3); // Get rid of " + " on the end
     		output += ")";
 		}
 		

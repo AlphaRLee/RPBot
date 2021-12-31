@@ -5,12 +5,12 @@ import java.util.Set;
 
 public class Item {
 	private String name;
-	private Set<Attribute> attributeEffects;
+	private Set<NumberAttribute> attributeEffects;
 	private CharProfile profile;
 	
 	public Item(String name) {
 		this.setName(name);
-		attributeEffects = new HashSet<Attribute>();
+		attributeEffects = new HashSet<NumberAttribute>();
 	}
 
 	/**
@@ -57,27 +57,27 @@ public class Item {
 	
 	/**
 	 * Get the effect this item has on the specified attribute.
-	 * More specifically, invokes {@link Attribute#getItemEffect(Item)} with this item if attribute is valid 
+	 * More specifically, invokes {@link NumberAttribute#getItemEffect(Item)} with this item if attribute is valid
 	 * and has been added to this effect list.
 	 * @param attribute Attribute to get value of.
 	 * @return Effect value of attribute.  Will return null if attribute is null or not added to attributeEffects
 	 *
 	 * @author R Lee
 	 */
-	public Integer getEffect(Attribute attribute) {
+	public Integer getEffect(NumberAttribute attribute) {
 		return (attribute != null && attributeEffects.contains(attribute)) ? attribute.getItemEffect(this) : null;
 	}
 	
 	/**
 	 * Set the effect value for a particular attribute.
-	 * Invokes {@link Attribute#setItemEffect(Item, Integer)} with this item and the effect value.
+	 * Invokes {@link NumberAttribute#setItemEffect(Item, Integer)} with this item and the effect value.
 	 * Adds attribute to attributeEffects if absent or replaces last effect value if present.
 	 * @param attribute Attribute to associate value for. If null, nothing will happen
 	 * @param effectValue
 	 *
 	 * @author R Lee
 	 */
-	public void setEffect(Attribute attribute, Integer effectValue) {
+	public void setEffect(NumberAttribute attribute, Integer effectValue) {
 		if (attribute == null) {
 			return;
 		}
