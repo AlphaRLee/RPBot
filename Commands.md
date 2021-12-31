@@ -251,7 +251,7 @@ To remove a maximum value, use `&deleteattribute` and recreate the attribute
 * `&set str 6` - Alias for the command above, assuming alias `str` is for `strength`
 * `&set str 4 char2` - Set the strength attribute to 4 for `Char2`. Character names are case-insensitive
 * `&set hp 15/20` - Set the HP attribute to 15 out of 20 for the current player
-* `&set hp 21/20` - Set the HP attribute to 21 out of 21 for the current player
+* `&set hp 21/20` - Set the HP attribute to 21 out of 20 for the current player
 * `&set hp 14` - Set the HP attribute to 14 out of 20 for the current player. 
   Note that the "out of 20" is only implied if the attribute was already defined with a maximum value (from either creating the character or running the `&set` command with `/20` in it earlier) 
 * `&set hammer d6+str` - Set the hammer attribute to `d6+str`, using the strength attribute defined before.
