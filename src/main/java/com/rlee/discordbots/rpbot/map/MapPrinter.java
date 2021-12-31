@@ -103,8 +103,6 @@ class MapPrinter {
 	/**
 	 * Build the printable entities map and establish the iterator for it.
 	 * @param bottomLeftCorner
-	 * @param rowCount
-	 * @param colCount
 	 * @param entitiesByCoordinate
 	 * @return
 	 */
@@ -135,8 +133,6 @@ class MapPrinter {
 	/**
 	 * Get the entity map as a string starting with the given coordinates for the bottom-left corner
 	 * @param bottomLeftCorner The bottom left corner of the map to print
-	 * @param rowCount The number of rows to print
-	 * @param colCount The number of columns to print
 	 * @param printableEntities The entities to be printed out
 	 */
 	String showMap(RPCoordinate bottomLeftCorner, NavigableMap<RPCoordinate, RPMapEntityList> printableEntities) {
@@ -179,9 +175,7 @@ class MapPrinter {
 	 */
 	private void buildStaticRows() {
 		blankInnerRow = buildInnerRow(blankChar, colDividerChar);
-		if (rowDivider == null) {
-			rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
-		}
+		rowDivider = buildInnerRow(rowDividerChar, cornerDividerChar);
 	}
 
 	/**
@@ -255,7 +249,7 @@ class MapPrinter {
 		RPMapEntityList entityList = nextPrintableEntityList.getValue();
 		if (Util.isEmptyCollection(entityList)) {
 			// For optimization's sake, it's faster to just do the redundant blank print here
-			// This condition occurs when an entity moves off a previously ocupied cell
+			// This condition occurs when an entity moves off a previously occupied cell
 			sb.append(blankChar);
 		} else {
 			sb.append(entityList.get(0).getSymbol());
@@ -324,15 +318,6 @@ class MapPrinter {
 		StringBuilder sb = new StringBuilder();
 		int i = 0;
 
-		//Edge case: Explicitly search for index == 0 for efficiency
-//		if (index == 0) {
-//			while (i < digits.length - 1) {
-//				sb.append(' ');
-//				i++;
-//			}
-//			return sb.append('0').toString();
-//		}
-
 		while (digits[i] == BLANK_DIGIT) {
 			sb.append(blankChar);
 			i++;
@@ -359,10 +344,6 @@ class MapPrinter {
 		for (int i = 0, j = leftCol; i < netColCount; i++, j++) {
 			numericColIndices[i] = getPaddedDigits(j, maxColIndexWidth, RPMap.COL_RADIX);
 
-//			//Edge case
-//			if (j % RPMap.COL_RADIX == 0) {
-//				numericColIndices[i][maxColIndexWidth - 1] = BLANK_DIGIT;
-//			}
 		}
 
 		StringBuilder sb = new StringBuilder();

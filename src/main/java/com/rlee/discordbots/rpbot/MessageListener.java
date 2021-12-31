@@ -332,7 +332,7 @@ public class MessageListener extends ListenerAdapter {
 	 */
 	private void currentProfileClaimCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
 		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
-		if (!cmdParser.validateParameterLength(new String[] {}, "[@User|Profile]")) {
+		if (!cmdParser.validateParameterLength(new String[] {}, "@User|Profile")) {
 			return;
 		}
 
