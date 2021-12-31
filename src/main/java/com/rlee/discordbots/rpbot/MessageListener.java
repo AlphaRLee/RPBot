@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 public class MessageListener extends ListenerAdapter {
 
@@ -453,6 +454,12 @@ public class MessageListener extends ListenerAdapter {
 
 		String nameArg = args[1];
 		String valueArg = args[2];
+
+		// Accept only \w (equivalent to [a-zA-Z0-9_]) for attribute names
+		if (!nameArg.matches("^\\w+$")) {
+			channel.sendMessage("Sorry, the attribute name **" + MarkdownSanitizer.escape(nameArg) + "** must only contain letters, digits and underscores.").queue();
+			return;
+		}
 
 		CharProfile profile = getProfileOrSendError(args.length > 3 ? args[3] : null, game, member, channel);
 		if (profile == null) {
