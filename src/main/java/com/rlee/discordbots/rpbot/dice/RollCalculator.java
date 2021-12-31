@@ -25,6 +25,8 @@ import net.dv8tion.jda.api.entities.User;
 public class RollCalculator {
 
 	private static final int DEFAULT_RANGE = 20;
+	// Choose a small recursion limit because recursive ExpressionAttributes like "&setattr rec rec+rec" has an O(n^m) size
+	private static final int RECURSION_LIMIT = 10;
 
 	// Delimiters separating terms in an expression
 	private static List<String> termDelimiters = Arrays.asList("+", "-");
@@ -74,27 +76,9 @@ public class RollCalculator {
 				}
 			}
 
-    		// Remove all whitespaces and split everything by the term delimiter "+" character (will split by "-" later)
-    		String[] args = expression.replaceAll(" ", "").split("\\+");
-    		AliasRegistry aliasRegistry = (inGame ? game.getAliasRegistry() : null);
-   
-    		for (int i = 0; i < args.length; i++) {
-    			String[] innerArgs = args[i].split("\\-"); // Split along term delimiter "-" character
-    			
-    			if (i == 0) {
-    				// Append default roll in front of first attr roll if applicable
-    				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, true, true, aliasRegistry, cachedAliases));
-    			} else {
-    				// Not first roll, do not attach default roll
-    				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, aliasRegistry, cachedAliases));
-    			}
-    			
-    			// Handle negative numbers
-    			for (int j = 1; j < innerArgs.length; j++) {
-    				numbers.addAll(computeArg(innerArgs[j], true, profile, rollAttribute, aliasRegistry, cachedAliases));
-    			}
-    		}
-    		
+    		// Remove all whitespaces
+			expression = expression.replaceAll(" ", "");
+    		numbers.addAll(computeExpression(expression, profile, rollAttribute, inGame ? game.getAliasRegistry() : null, cachedAliases, RECURSION_LIMIT));
 		} else {
 			// Empty string
 			numbers.add(rollDefaultDie());
@@ -160,6 +144,38 @@ public class RollCalculator {
 		}
 	}
 
+	private List<Integer> computeExpression(String expression, CharProfile profile, boolean rollAttribute, AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
+		List<Integer> numbers = new LinkedList<>();
+
+		// If recursion counter has hit limit, then return a zero to queue user
+		if (recursionCount <= 0) {
+			numbers.add(0);
+			return numbers;
+		}
+
+		// Split everything by the term delimiter "+" character (will split by "-" later)
+		String[] args = expression.split("\\+");
+
+		for (int i = 0; i < args.length; i++) {
+			String[] innerArgs = args[i].split("\\-"); // Split along term delimiter "-" character
+
+			if (i == 0) {
+				// Append default roll in front of first attr roll if applicable
+				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, true, true, aliasRegistry, cachedAliases));
+			} else {
+				// Not first roll, do not attach default roll
+				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, aliasRegistry, cachedAliases));
+			}
+
+			// Handle negative numbers
+			for (int j = 1; j < innerArgs.length; j++) {
+				numbers.addAll(computeArg(innerArgs[j], true, profile, rollAttribute, aliasRegistry, cachedAliases));
+			}
+		}
+
+		return numbers;
+	}
+
 	/**
 	 * Parse a roll arg and get a list of numbers carrying all roll values.
 	 * Will pad invalid entries with 0
@@ -221,30 +237,11 @@ public class RollCalculator {
 			}
 		}
 
-		// FIXME: Get rid of instanceof restriction
-		if (attribute != null && attribute instanceof NumberAttribute) {
-			NumberAttribute numberAttribute = (NumberAttribute) attribute;
-			int attrVal = numberAttribute.getValue();
-			
-			// Valid attribute, perform roll check and negative check
-			if (rollAttribute) {
-				attrVal = getRandInt(attrVal);
+		if (attribute != null) {
+			if (attribute instanceof NumberAttribute) {
+				numbers.addAll(computeNumberAttribute((NumberAttribute) attribute, isNegative, rollAttribute));
 			}
-			
-			if (isNegative) {
-				attrVal *= -1;
-			}
-			
-			numbers.add(attrVal);
-			
-			if (numberAttribute.hasItemEffects()) { // Apply item effects
-				numbers.add(numberAttribute.getItemEffectsSum());
-			}
-			
-			if (numberAttribute.hasBuff()) { // Apply buffs
-				numbers.add(numberAttribute.getBuff());
-				numberAttribute.decrementBuffDuration(true);
-			}
+
 		} else if (padZero) {
 			numbers.add(0); // Add an empty value to serve as a queue to the end user
 							// Only add zero if requested
@@ -252,7 +249,34 @@ public class RollCalculator {
 		
 		return numbers;
 	}
-	
+
+	private List<Integer> computeNumberAttribute(NumberAttribute attribute, boolean isNegative, boolean rollAttribute) {
+		List<Integer> numbers = new LinkedList<>();
+
+		// Valid attribute, apply roll and negative
+		int attrVal = attribute.getValue();
+		if (rollAttribute) {
+			attrVal = getRandInt(attrVal);
+		}
+
+		if (isNegative) {
+			attrVal *= -1;
+		}
+
+		numbers.add(attrVal);
+
+		if (attribute.hasItemEffects()) { // Apply item effects
+			numbers.add(attribute.getItemEffectsSum());
+		}
+
+		if (attribute.hasBuff()) { // Apply buffs
+			numbers.add(attribute.getBuff());
+			attribute.decrementBuffDuration(true);
+		}
+
+		return numbers;
+	}
+
 	/**
 	 * Roll a single die with the default number of faces
 	 * @return A number between 1 - DEFAULT_RANGE
