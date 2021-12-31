@@ -12,6 +12,7 @@ import com.rlee.discordbots.rpbot.RPBot;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
+import com.rlee.discordbots.rpbot.profile.ExpressionAttribute;
 import com.rlee.discordbots.rpbot.profile.NumberAttribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.AliasRegistry;
@@ -78,7 +79,7 @@ public class RollCalculator {
 
     		// Remove all whitespaces
 			expression = expression.replaceAll(" ", "");
-    		numbers.addAll(computeExpression(expression, profile, rollAttribute, inGame ? game.getAliasRegistry() : null, cachedAliases, RECURSION_LIMIT));
+    		numbers.addAll(computeExpression(expression, profile, false, rollAttribute, true, inGame ? game.getAliasRegistry() : null, cachedAliases, RECURSION_LIMIT));
 		} else {
 			// Empty string
 			numbers.add(rollDefaultDie());
@@ -144,32 +145,28 @@ public class RollCalculator {
 		}
 	}
 
-	private List<Integer> computeExpression(String expression, CharProfile profile, boolean rollAttribute, AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
+	private List<Integer> computeExpression(String expression, CharProfile profile, boolean isNegative, boolean rollAttribute, boolean canPrependDefault, AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
 		List<Integer> numbers = new LinkedList<>();
-
-		// If recursion counter has hit limit, then return a zero to queue user
-		if (recursionCount <= 0) {
-			numbers.add(0);
-			return numbers;
-		}
 
 		// Split everything by the term delimiter "+" character (will split by "-" later)
 		String[] args = expression.split("\\+");
 
 		for (int i = 0; i < args.length; i++) {
 			String[] innerArgs = args[i].split("\\-"); // Split along term delimiter "-" character
+			boolean isChildNegative = isNegative;
 
 			if (i == 0) {
-				// Append default roll in front of first attr roll if applicable
-				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, true, true, aliasRegistry, cachedAliases));
+				// Append default roll in front of first NumberAttribute roll if applicable
+				numbers.addAll(computeArg(innerArgs[0], isChildNegative, profile, rollAttribute, canPrependDefault, true, aliasRegistry, cachedAliases, recursionCount));
 			} else {
 				// Not first roll, do not attach default roll
-				numbers.addAll(computeArg(innerArgs[0], false, profile, rollAttribute, aliasRegistry, cachedAliases));
+				numbers.addAll(computeArg(innerArgs[0], isChildNegative, profile, rollAttribute, aliasRegistry, cachedAliases, recursionCount));
 			}
 
 			// Handle negative numbers
 			for (int j = 1; j < innerArgs.length; j++) {
-				numbers.addAll(computeArg(innerArgs[j], true, profile, rollAttribute, aliasRegistry, cachedAliases));
+				isChildNegative = !isNegative; // Flip negative (two negatives cancel out)
+				numbers.addAll(computeArg(innerArgs[j], isChildNegative, profile, rollAttribute, aliasRegistry, cachedAliases, recursionCount));
 			}
 		}
 
@@ -181,13 +178,16 @@ public class RollCalculator {
 	 * Will pad invalid entries with 0
 	 * @param arg
 	 * @param isNegative Set to true to have all returned values as negative numbers
+     * @param aliasRegistry
+	 * @param cachedAliases
+	 * @param recursionCount Number of remaining recursions this function is allowed to execute. Must be non-negative
 	 * @return List of numbers where entries are ordered by parsing.
 	 *
 	 * @author R Lee
 	 */
 	private List<Integer> computeArg(String arg, boolean isNegative, CharProfile profile, boolean rollAttribute, 
-			AliasRegistry aliasRegistry, Map<String, String> cachedAliases) {
-		return computeArg(arg, isNegative, profile, rollAttribute, false, true, aliasRegistry, cachedAliases);
+			AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
+		return computeArg(arg, isNegative, profile, rollAttribute, false, true, aliasRegistry, cachedAliases, recursionCount);
 	}
 	
 	/**
@@ -199,13 +199,16 @@ public class RollCalculator {
 	 * @param profile Profile to roll attributes for. If arg is not a simple dice expression, then this must not be null.
 	 * @param rollAttribute Set to true to consider any attributes found as a dice with the number of faces equal to the attribute value
 	 * @param padZero If the output cannot be computed, insert a 0 into the final expression
-	 * @param prependDefault If true and arg is an attribute name, will insert new entry of default roll at the beginning of the list
+	 * @param prependDefault If true and arg is a NumberAttribute or invalid attribute name, will insert new entry of default roll at the beginning of the list
+	 * @param aliasRegistry
+	 * @param cachedAliases
+	 * @param recursionCount Number of remaining recursions this function is allowed to execute. Must be non-negative
 	 * @return
 	 *
 	 * @author R Lee
 	 */
 	private List<Integer> computeArg(String arg, boolean isNegative, CharProfile profile, boolean rollAttribute, boolean prependDefault, boolean padZero,
-			AliasRegistry aliasRegistry, Map<String, String> cachedAliases) {
+			AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
 		if (Util.isEmptyString(arg)) {
 			return new LinkedList<>();
 		}
@@ -215,10 +218,6 @@ public class RollCalculator {
 		if (!numbers.isEmpty()) {
 			// Dice expression successfully rolled, terminate here
 			return numbers;
-		}
-		
-		if (prependDefault) {
-			numbers.add(rollDefaultDie()); // Inject a default roll if this is the only roll and not a dice expression
 		}
 		
 		String name = arg.toLowerCase();
@@ -239,10 +238,20 @@ public class RollCalculator {
 
 		if (attribute != null) {
 			if (attribute instanceof NumberAttribute) {
+				if (prependDefault) {
+					numbers.add(rollDefaultDie()); // Inject a default roll
+				}
+
 				numbers.addAll(computeNumberAttribute((NumberAttribute) attribute, isNegative, rollAttribute));
+			} else if (attribute instanceof ExpressionAttribute) {
+				numbers.addAll(computeExpressionAttribute((ExpressionAttribute) attribute, profile, isNegative, rollAttribute, aliasRegistry, cachedAliases, recursionCount));
 			}
 
 		} else if (padZero) {
+			if (prependDefault) {
+				numbers.add(rollDefaultDie()); // Inject a default roll
+			}
+
 			numbers.add(0); // Add an empty value to serve as a queue to the end user
 							// Only add zero if requested
 		}
@@ -275,6 +284,16 @@ public class RollCalculator {
 		}
 
 		return numbers;
+	}
+
+	private List<Integer> computeExpressionAttribute(ExpressionAttribute attribute, CharProfile profile, boolean isNegative, boolean rollAttribute, AliasRegistry aliasRegistry, Map<String, String> cachedAliases, int recursionCount) {
+		if (recursionCount <= 0) {
+			return Arrays.asList(0);
+		}
+
+		// RECURSIVE CALL
+		// Never prepend a default
+		return computeExpression(attribute.getValue(), profile, isNegative, rollAttribute, false, aliasRegistry, cachedAliases, recursionCount - 1);
 	}
 
 	/**
@@ -365,13 +384,22 @@ public class RollCalculator {
 		 // Start message with sender name, or self mention
 		String output = (!Util.isEmptyString(sender) ? sender : RPBot.selfUser().getAsMention());
 		output += " rolled **" + getSum(numbers) + "**.";
-		
+
+		String diceRollsOutput = "";
 		if (numbers.size() > 1) {
-			output += " (";
-			output += numbers.stream().map(Object::toString).collect(Collectors.joining(" + "));
-    		output += ")";
+			diceRollsOutput += " (";
+			diceRollsOutput += numbers.stream().map(Object::toString).collect(Collectors.joining(" + "));
+			diceRollsOutput += ")";
 		}
-		
-		channel.sendMessage(output).queue();
+
+		try {
+			channel.sendMessage(output + diceRollsOutput).queue();
+		} catch (IllegalArgumentException exception) {
+			// Likely culprit is message is too long
+			if (exception.getMessage().equals("Provided text for message must be less than 2000 characters in length")) {
+				channel.sendMessage(output + " (Individual dice rolls exceed max Discord message length)").queue();
+			}
+		}
+
 	}
 }
