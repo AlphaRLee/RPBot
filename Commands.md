@@ -17,10 +17,16 @@ The `&roll` command allows you to roll any combination of the following expressi
 * **Fixed modifiers**, in the format `<n>` where `n` is any integer (note that floating point numbers have undefined behaviour)
     * Example: `5` rolls a constant 5 every time
 * **Character attributes**, in the format of `<attribute name>`, where `attribute name` is either:
-    * a fixed modifier (default), or
-    * the number of sides on a single die (edit server's config.yml file so that roll.rollAttribute = true)
-  You can use aliases (if configured) instead of the full attribute name.  
-  **Note**: If an attribute the first expression in the roll command, then a d20 will automatically be added.
+    * a number expression (i.e. a fixed modifier)
+      **Note**: If an attribute the first expression in the roll command, then a d20 will automatically be added.
+      * The fixed modifier can be changed to the number of sides on a single die (edit server's config.yml file so that roll.rollAttribute = true)
+    * an expression attribute (i.e. another expression).
+      Nested expression attributes are supported to a depth of 10 (any further will have a value of 0 added instead).
+      Expresion attributes act like a block with parenthesis. Therefore, subtracting an expression with a negative number or attribute will instead add it.
+  
+If the attribute is not set for the character, a value of 0 is used instead.
+See the `&setattr` command for how to set attributes on a character.
+You can use aliases (if configured) instead of the full attribute name. See the `&alias` command for how to create aliases.
 
 All dice expressions can be added together with `+` and subtracted with `-`.
 
@@ -48,6 +54,7 @@ Assumptions:
 * There are two characters named `Char1` and `Char2`
 * The user running the command has claimed the character `Char1`
 * `Char1` and `Char2` has an attribute called `strength` (alias `str`) set to 5 and 3 respectively
+* `Char1` has an attribute called `hammer` set to `d6+str`
 
 Examples:
 * `&roll strength` - Rolls d20 + 5. The 5 is based on `Char1` strength attribute of 5
@@ -57,6 +64,16 @@ Examples:
 * `&r strength char2` - Rolls d20 + 3. The 3 is based on `Char2` strength of 3. Note names are case-insensitive
 * `&r str + 2d4 + 1 char2` - Rolls d20 + 3 + two d4 + 1
 * `&r d10 + str + 2` - **Rolls d10 + 5 + 2.** When adding anything before the character's attribute, the default d20 is dropped
+
+**Example Using Expression Attributes**
+
+Assumptions:
+* `Char1` and `Char2` has an attribute called `strength` (alias `str`) set to 5 and 3 respectively
+* `Char1` and `Char2` each have an attribute called `hammer` set to `d6+str`
+
+Example:
+* `&r hammer` - Rolls d6 + 5. `hammer` is converted into `d6+str` and `str` is based on the strength attribute of 3
+* `&r hammer char2` - Rolls d6 + 3. The 3 is based on `Char2` strength of 3
 
 **Example With Temporary Modifier**
 
@@ -72,7 +89,6 @@ The following commands are ran sequentially. Note how commands 2 and 3 are added
 3. `&r agi char2` - _Rolls a d20 + d4, as usual. Has no effect on the temporary modifier because the temporary modifier belongs to `Char1` not `Char2`_
 4. `&r agi` - Rolls d20 + 2 + 3. Same as command 1, now the temporary modifier is decremented from 1 to 0 (i.e. it is removed)
 5. `&r agi` - Rolls d20 + 2. The +3 modifier is now removed so it has no effect.
-
 
 ## Character Profile Commands
 ### `&list`
@@ -179,7 +195,15 @@ Delete the specified character.
 **Example**
 `&delchar char1` - Delete `Char1`. Note that names are case-insensitive
 
-### `&claimchar <character>`
+### `&claimed [@User|character]`
+Alias `&whoami`, `&whois`
+
+Get information on who currently has claimed a character.
+If you do not specify any arguments, you get which character you have claimed.
+If you tag a user in the command arguments, you get which character they have claimed.
+If you use a character's name, you get which player has claimed that character.
+
+### `&claimchar <character> [@User]`
 Alias `&claim`
 
 Claim a character as yours on this server.
@@ -188,25 +212,39 @@ This changes commands like `&roll` and `&attr` to default to your character if y
 If you already claimed a different character, you will automatically unclaim that character before claiming this one.
 You cannot claim a character that has already been claimed by another user. Ask them to run `&unclaim <character>` first.
 
+You can force another player to claim a character by tagging them as the last argument in this command. Please don't abuse this.
+
 **Example**
 `&claim char1` - Claim `Char1` for yourself. Note that names are case-insensitive
 
 ### `&unclaimchar`
-Alias `&unclaim`
+Alias `&unclaim [@User]`
 
 End your claim on a character and allow other players to claim it.
+You can force another user to unclaim their character by tagging them as the last argument in this command. Please don't abuse this.
 
 ### `&setattr <value>[/<max_value>] <attribute> [character]`
 Alias `&set`
 
 Set an attribute for a character to the specified value. Defaults to the user's character if the character is not defined.
 By adding `/<max_value>` to the end of the value, you can set a maximum value for that attribute.
-Attributes and max values must be integers. For the `&roll` command using an attribute with a maximum value, only the current value is used.
 
+Attributes come in two variants:
+1. Number Attributes - these are simple attributes that adds a fixed value, and supports a maximum value. Both the attribute value and maximum value must be integers. 
+   For the `&roll` command using an attribute with a maximum value, only the current value is used.
+2. Expression Attributes - this attribute can be any valid dice expression (see `&roll` command), including any attributes, but excluding the target character.
+   If the expression attribute includes any attributes within, the `&roll` command will use the character's attribute values.
+   **Note**: Do not include any spaces in the expression attribute value.
+     * **Correct**: `&set hammer d6+str`
+     * **Incorrect**: `&set hammer d6 + str`
+  
 If the attribute does not exist on the character, the attribute is added.
 
 **Note**: Maximum values can be changed by running the `&set` command, but currently cannot be removed.
 To remove a maximum value, use `&deleteattribute` and recreate the attribute
+
+**Note**: Replacing a number attribute with an expression attribute with the same name will effectively delete all information about the number attribute
+(i.e. maximum value and buffs are deleted).
 
 **Examples**
 * `&setattr strength 6` - Set the strength attribute to 6 for the current character
@@ -216,7 +254,8 @@ To remove a maximum value, use `&deleteattribute` and recreate the attribute
 * `&set hp 21/20` - Set the HP attribute to 21 out of 21 for the current player
 * `&set hp 14` - Set the HP attribute to 14 out of 20 for the current player. 
   Note that the "out of 20" is only implied if the attribute was already defined with a maximum value (from either creating the character or running the `&set` command with `/20` in it earlier) 
-  
+* `&set hammer d6+str` - Set the hammer attribute to `d6+str`, using the strength attribute defined before.
+
 ### `&deleteattribute <attribute> [character]`
 Alias `&delattr`
 
