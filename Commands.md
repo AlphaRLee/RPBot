@@ -54,7 +54,6 @@ Assumptions:
 * There are two characters named `Char1` and `Char2`
 * The user running the command has claimed the character `Char1`
 * `Char1` and `Char2` has an attribute called `strength` (alias `str`) set to 5 and 3 respectively
-* `Char1` has an attribute called `hammer` set to `d6+str`
 
 Examples:
 * `&roll strength` - Rolls d20 + 5. The 5 is based on `Char1` strength attribute of 5
