@@ -20,15 +20,12 @@ public class CharProfile {
 	private Member member;
 	private Message sourceMessage;
 	
-	private Map<String, Attribute> attributes;
-	// Attributes carrying max values, eg: health
-	//private Map<String, Integer> attributeMaxes;
+	private Map<String, Attribute<?>> attributes;
 	
 	public CharProfile(ProfileRegistry profileRegistry) {
 		// Default constructor. No name given, designed for temporary value only
 		this.profileRegistry = profileRegistry;
-		attributes = new LinkedHashMap<String, Attribute>();
-		//attributeMaxes = new HashMap<String, Integer>();	
+		attributes = new LinkedHashMap<>();
 	}
 
 	public CharProfile(ProfileRegistry profileRegistry, String name) {
@@ -91,7 +88,7 @@ public class CharProfile {
 	/**
 	 * @return the attributes of this character
 	 */
-	public Map<String, Attribute> getAttributes() {
+	public Map<String, Attribute<?>> getAttributes() {
 		return attributes;
 	}
 
@@ -99,7 +96,7 @@ public class CharProfile {
 	 * @param attributes
 	 *            the attributes to set
 	 */
-	public void setAttributes(Map<String, Attribute> attributes) {
+	public void setAttributes(Map<String, Attribute<?>> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -109,7 +106,7 @@ public class CharProfile {
 	 *
 	 * @author R Lee
 	 */
-	public Attribute getAttribute(String attributeName) {
+	public Attribute<?> getAttribute(String attributeName) {
 		return attributes.get(attributeName.toLowerCase());
 	}
 
@@ -120,7 +117,7 @@ public class CharProfile {
 	 *
 	 * @author R Lee
 	 */
-	public void setAttribute(String attributeName, Attribute attribute) {
+	public void setAttribute(String attributeName, Attribute<?> attribute) {
 		if (Util.isEmptyString(attributeName)) {
 			return;
 		}
@@ -143,7 +140,7 @@ public class CharProfile {
 		return attributes.containsKey(attributeName.toLowerCase());
 	}
 	
-	public Attribute removeAttribute(String attributeName) {
+	public Attribute<?> removeAttribute(String attributeName) {
 		if (Util.isEmptyString(attributeName) || !hasAttribute(attributeName)) {
 			return null;
 		}
@@ -151,7 +148,7 @@ public class CharProfile {
 		return attributes.remove(attributeName.toLowerCase());
 	}
 	
-	public Attribute removeAttribute(Attribute attribute) {
+	public Attribute<?> removeAttribute(Attribute<?> attribute) {
 		if (attribute == null) {
 			return null;
 		}

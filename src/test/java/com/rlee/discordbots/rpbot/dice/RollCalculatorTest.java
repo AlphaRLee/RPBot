@@ -64,7 +64,6 @@ public class RollCalculatorTest {
     public void beforeEach() {
         rollCalculator = new RollCalculator();
 
-        String selfUserMention = "@selfUser";
         try (MockedStatic<RPBot> rpBot = mockStatic(RPBot.class)) {
             rpBot.when(RPBot::selfUser).thenReturn(selfUser);
         }

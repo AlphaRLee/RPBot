@@ -46,6 +46,8 @@ public class RPGame {
 	}
 	
 	public Guild getGuild() {
+		// TODO: Refactor to get guild object from ID (https://github.com/DV8FromTheWorld/JDA#entity-lifetimes)
+		//		https://github.com/DV8FromTheWorld/JDA/releases/tag/v4.2.0
 		return guild;
 	}
 	

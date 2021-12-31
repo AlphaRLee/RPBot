@@ -1,6 +1,5 @@
 package com.rlee.discordbots.rpbot;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.rlee.discordbots.rpbot.command.CommandParser;
@@ -8,6 +7,8 @@ import com.rlee.discordbots.rpbot.map.MapCommandHandler;
 import com.rlee.discordbots.rpbot.dice.RollCalculator;
 import com.rlee.discordbots.rpbot.game.RPGame;
 import com.rlee.discordbots.rpbot.profile.Attribute;
+import com.rlee.discordbots.rpbot.profile.ExpressionAttribute;
+import com.rlee.discordbots.rpbot.profile.NumberAttribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.profile.ProfilePrinter;
 import com.rlee.discordbots.rpbot.reader.ProfileReader;
@@ -20,10 +21,11 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 public class MessageListener extends ListenerAdapter {
 
-	public static String COMMAND_PREFIX = "&";	//Official RPBot
+	public static String COMMAND_PREFIX = "&";	// Official RPBot
 	private RollCalculator rollCalculator;
 	private MapCommandHandler mapCommandHandler;
 	
@@ -67,7 +69,6 @@ public class MessageListener extends ListenerAdapter {
 
 			MessageBuilder outputBuilder = new MessageBuilder();
 			outputBuilder.append(output);
-//			outputBuilder.setColor(Color.ORANGE);
 
 			channel.sendMessage(outputBuilder.build()).queue();
 		}
@@ -131,7 +132,7 @@ public class MessageListener extends ListenerAdapter {
 			
 			break;
 		}	
-		case "read": {
+		case "read": case "load": {
 			readCmd(game.getProfileRegistry(), event);
 			break;
 		}	
@@ -166,10 +167,9 @@ public class MessageListener extends ListenerAdapter {
 			if (profile == null) {
 				break;
 			}
-			
-			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
+
+			Attribute<?> attribute = getAttributeOrSendError(args[1], profile, game, channel);
 			if (attribute == null) {
-				channel.sendMessage("No attribute found by the name: **" + args[1] + "** for " + profile.getName() + ".").queue();
 				break;
 			}
 			
@@ -231,6 +231,10 @@ public class MessageListener extends ListenerAdapter {
 			channel.sendMessage(profile.getName() + "'s information has been saved!").queue();
 			break;
 		}
+		case "claimed": case "whoami": case "whois": {
+			currentProfileClaimCmd(args, game, channel, message);
+			break;
+		}
 		case "claim": case "claimchar": {
 			claimProfileCmd(args, game, channel, message);
 			break;
@@ -240,57 +244,7 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "set": case "setattr": {
-			/*
-			 * Set an existing attribute to the given score
-			 * &set <value>[/maxvalue] <attribute> [character]
-			 * Eg: &set hp 20
-			 * Eg: &set stam 20/30 Bob
-			 */
-			
-			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, "\b/max\\_value", "character")) {
-				break;
-			}
-
-			CharProfile profile = getProfileOrSendError(args.length > 3 ? args[3] : null, game, member, channel);
-			if (profile == null) {
-				break;
-			}
-
-			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
-			if (attribute == null) {	
-				//Insert a new attribute
-				//TODO Set the following code into constructor of Attribute
-				attribute = new Attribute(args[1]);
-				attribute.setProfile(profile);
-				profile.setAttribute(args[1], attribute);
-			}
-			
-			String[] values = args[2].split("/"); //TODO Remove magic value
-			Integer value = null, maxValue = null;
-			try {
-				value = Integer.valueOf(values[0]);
-			} catch (NumberFormatException e) {
-				channel.sendMessage("Sorry, **" + values[0] + "** is not recognized as a number").queue();
-				break;
-			}
-			
-			if (values.length >= 2 && !values[1].isEmpty()) {
-				//Max value has been found
-				try {
-					maxValue = Integer.valueOf(values[1]);
-				} catch (NumberFormatException e) {
-					channel.sendMessage("Sorry, **" + values[1] + "** is not recognized as a number").queue();
-					break;
-				}
-			}
-			
-			attribute.setValue(value, true);
-			if (maxValue != null) {
-				attribute.setMaxValue(maxValue);
-			}
-			
-			ProfilePrinter profilePrinter = new ProfilePrinter();
-			profilePrinter.messageAttributeDetail(profile, attribute, channel);
+			setAttributeCmd(args, game, channel, member);
 			break;
 		}
 		case "delattr": case "deleteattribute": {
@@ -307,9 +261,8 @@ public class MessageListener extends ListenerAdapter {
 				break;
 			}
 
-			Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
+			Attribute<?> attribute = getAttributeOrSendError(args[1], profile, game, channel);
 			if (attribute == null) {
-				channel.sendMessage("No attribute found by the name: **" + args[1] + "** for " + profile.getName() + ".").queue();
 				break;
 			}
 			
@@ -369,7 +322,63 @@ public class MessageListener extends ListenerAdapter {
 		reader.readProfilesFromChannel(profileRegistry, mentionedChannels.get(0), 50);
 		event.getChannel().sendMessage("Character profiles read from " + mentionedChannels.get(0).getAsMention() + "!").queue();
 	}
-	
+
+	/**
+	 * Get the current profile of the requested player
+	 * @param args
+	 * @param game
+	 * @param channel
+	 * @param message
+	 */
+	private void currentProfileClaimCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
+		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
+		if (!cmdParser.validateParameterLength(new String[] {}, "[@User|Profile]")) {
+			return;
+		}
+
+		String target = args.length > 1 ? args[1] : null;
+
+		// Try resolving based on member first (assume using sender of message if target is null)
+		Member member = getMember(message, channel, target);
+		if (member != null) {
+			CharProfile profile = game.getProfileRegistry().getProfile(member);
+			if (profile == null) {
+				channel.sendMessage(member.getAsMention() + " has no claimed profile. Use `&claim profile [@User]` to claim a profile.").queue();
+				return;
+			}
+
+			channel.sendMessage(member.getAsMention() + " has claimed the profile **" + profile.getName() + "**.").queue();
+		} else {
+			// Fall back to trying to resolve by profile name
+			printProfileOwnerCmd(target, game, channel);
+		}
+	}
+
+	/**
+	 * Helper function for currentProfileClaimCmd.
+	 * Attempts to resolve profile and print profile & owner.
+	 * If profile is null, prints error that profileName cannot be resolved to EITHER profile or user
+	 * @param profileName Targeted name for profile
+	 * @param game
+	 * @param channel
+	 */
+	private void printProfileOwnerCmd(String profileName, RPGame game, MessageChannel channel) {
+		CharProfile profile = game.getProfileRegistry().getProfile(profileName);
+		if (profile == null) {
+			// Error, target is neither user mention nor profile name
+			channel.sendMessage("No user nor profile found with name **" + profileName + "**.").queue();
+			return;
+		}
+
+		Member member = profile.getMember();
+		if (member == null) {
+			channel.sendMessage("Profile **" + profile.getName() + "** is not claimed by anybody. Claim it with `&claim " + profile.getName() + "`.").queue();
+			return;
+		}
+
+		channel.sendMessage(member.getAsMention() + " has claimed **" + profile.getName() + "**.").queue();
+	}
+
 	private void claimProfileCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
 		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
 		if (!cmdParser.validateParameterLength(new String[] {"character"}, "@User")) {
@@ -407,7 +416,7 @@ public class MessageListener extends ListenerAdapter {
 		channel.sendMessage(output).queue();
 		return;
 	}
-	
+
 	private void unclaimProfileCmd(String[] args, RPGame game, MessageChannel channel, Message message) {
 		if (channel == null) {
 			return;
@@ -425,6 +434,89 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		channel.sendMessage(member.getAsMention() + " has unclaimed the character profile **" + profile.getName() + "**.").queue();
+	}
+
+	/**
+	 * Set an existing attribute to the given score
+	 * &set <value>[/maxvalue] <attribute> [character]
+	 * Eg: &set hp 20
+	 * Eg: &set stam 20/30 Bob
+	 * Eg: &set atk str
+	 *   - This example assumes that attack is calculated by the str attribute
+	 * Eg: &set rapier d8+pro
+	 *   - Uses pro attribute (short for proficiency). Assuming pro = 2, then rolls d8+2. Note no spaces in expression
+	 */
+	private void setAttributeCmd(String[] args, RPGame game, MessageChannel channel, Member member) {
+		CommandParser cmdParser = new CommandParser(args, (TextChannel) channel);
+		if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, "\b/max\\_value", "character")) {
+			return;
+		}
+
+		String nameArg = args[1];
+		String valueArg = args[2];
+
+		// Accept only \w (equivalent to [a-zA-Z0-9_]) for attribute names
+		if (!nameArg.matches("^\\w+$")) {
+			channel.sendMessage("Sorry, the attribute name **" + MarkdownSanitizer.escape(nameArg) + "** must only contain letters, digits and underscores.").queue();
+			return;
+		}
+
+		CharProfile profile = getProfileOrSendError(args.length > 3 ? args[3] : null, game, member, channel);
+		if (profile == null) {
+			return;
+		}
+
+		// Try parsing value of attribute
+		boolean isNumeric = false;
+		String[] values = valueArg.split("/"); //TODO Remove magic value
+		Integer numberValue = null;
+		Integer maxValue = null;
+		try {
+			numberValue = Integer.valueOf(values[0]);
+			isNumeric = true;
+		} catch (NumberFormatException e) {
+			// Do nothing - parse this as an ExpressionAttribute value
+		}
+
+		if (isNumeric && values.length >= 2 && !values[1].isEmpty()) {
+			//Max value has been found
+			try {
+				maxValue = Integer.valueOf(values[1]);
+			} catch (NumberFormatException e) {
+				channel.sendMessage("Sorry, **" + values[1] + "** is not recognized as a number").queue();
+				return;
+			}
+		}
+
+		Attribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
+		if (attribute == null ||
+				(isNumeric ^ (attribute instanceof NumberAttribute)) // Check if attribute type is mismatched
+		) {
+			//Insert a new attribute
+			//TODO Set the following code into constructor of Attribute
+			if (isNumeric) {
+				attribute = new NumberAttribute(nameArg);
+			} else {
+				attribute = new ExpressionAttribute(nameArg);
+			}
+
+			attribute.setProfile(profile);
+			profile.setAttribute(nameArg, attribute); // Add attribute or replace mismatched attribute
+		}
+
+		if (isNumeric) {
+			NumberAttribute numberAttribute = (NumberAttribute) attribute;
+			numberAttribute.setValue(numberValue, true);
+			if (maxValue != null) {
+				numberAttribute.setMaxValue(maxValue);
+			}
+		} else {
+			attribute.setValue(valueArg); // Set value to string value with no further parsing
+		}
+
+
+		ProfilePrinter profilePrinter = new ProfilePrinter();
+		profilePrinter.messageAttributeDetail(profile, attribute, channel);
 	}
 
 	/**
@@ -452,7 +544,7 @@ public class MessageListener extends ListenerAdapter {
 		int operatorArgLength = args[OPERATOR_ARG].length();
 
 		int value;
-		Attribute attribute = null;
+		NumberAttribute numberAttribute = null;
 		int duration = INVALID_VAL;
 		CharProfile profile = game.getProfileRegistry().getProfile(member);
 
@@ -498,11 +590,17 @@ public class MessageListener extends ListenerAdapter {
 		}
 
 		//TODO: Add attr if attr is missing from profile
-		attribute = game.getAliasRegistry().getAttribute(args[ATTR_ARG], profile);
+		Attribute<?> attribute = game.getAliasRegistry().getAttribute(args[ATTR_ARG], profile);
 		if (attribute == null) {
 			channel.sendMessage("No attribute found by the name: **" + args[ATTR_ARG] + "** for " + profile.getName() + ".").queue();
 			return;
 		}
+
+		if (!(attribute instanceof NumberAttribute)) {
+			channel.sendMessage("Attribute **" + attribute.getName() + "** for " + profile.getName() + " must be a numeric attribute. Current value is: " + attribute.getValue()).queue();
+			return;
+		}
+		numberAttribute = (NumberAttribute) attribute;
 		
 		//Get how many consecutive operator signs there are (eg. "+" vs "++" vs "---")
 		while (signCount < operatorArgLength && signCount < MAX_COUNT
@@ -539,19 +637,19 @@ public class MessageListener extends ListenerAdapter {
 		
 		String output = profile.getName();
 		if (duration != INVALID_VAL) {
-			attribute.setBuff(value * signVal, duration);
+			numberAttribute.setBuff(value * signVal, duration);
 			
 			output += " got a **" + (signVal == 1 ? "+" + value + "** buff" : "-" + value + "** debuff") 
-					+ " on " + attribute.getName().toLowerCase()
+					+ " on " + numberAttribute.getName().toLowerCase()
 					+ " for " + duration + " " + (duration == 1 ? "roll" : "rolls") + ".";
 		} else {
-			int oldValue = attribute.getValue();
+			int oldValue = numberAttribute.getValue();
 			
-			attribute.addToValue(value * signVal, bypassLimits);
+			numberAttribute.addToValue(value * signVal, bypassLimits);
 			
-			String maxValOutput = (attribute.hasMaxValue() ? "/" + attribute.getMaxValue() : "");
-			output += " " + (signVal == 1 ? "gained" : "lost") + " **" + value + "** " + attribute.getName().toLowerCase() + ".";
-			output += " (" + oldValue + maxValOutput + " -> " + attribute.getValue() + maxValOutput + ")";
+			String maxValOutput = (numberAttribute.hasMaxValue() ? "/" + numberAttribute.getMaxValue() : "");
+			output += " " + (signVal == 1 ? "gained" : "lost") + " **" + value + "** " + numberAttribute.getName().toLowerCase() + ".";
+			output += " (" + oldValue + maxValOutput + " -> " + numberAttribute.getValue() + maxValOutput + ")";
 		}
 	
 		channel.sendMessage(output).queue();
@@ -590,7 +688,7 @@ public class MessageListener extends ListenerAdapter {
 	 * @param memberName The name of the member to get. If null then uses the sender of the message
 	 * @return The targeted member or null if no member found
 	 */
-	private Member getMemberOrSendError(Message message, MessageChannel channel, String memberName) {
+	private Member getMember(Message message, MessageChannel channel, String memberName) {
 		Member member = null;
 		if (!Util.isEmptyString(memberName)) {
 			List<Member> mentionedMembers = message.getMentionedMembers();
@@ -601,10 +699,32 @@ public class MessageListener extends ListenerAdapter {
 			member = message.getMember();
 		}
 
+		return member;
+	}
+
+	/**
+	 * Get the targeted member or send an error if no member is found
+	 * @param message The sent message
+	 * @param channel The channel the message was sent from
+	 * @param memberName The name of the member to get. If null then uses the sender of the message
+	 * @return The targeted member or null if no member found
+	 */
+	private Member getMemberOrSendError(Message message, MessageChannel channel, String memberName) {
+		Member member = getMember(message, channel, memberName);
 		if (member == null) {
 			channel.sendMessage("No Discord user was found by the name of **" + memberName + "**.").queue();
 		}
 
 		return member;
+	}
+
+	private Attribute<?> getAttributeOrSendError(String attributeName, CharProfile profile, RPGame game, MessageChannel channel) {
+		Attribute<?> attribute = game.getAliasRegistry().getAttribute(attributeName, profile);
+		if (attribute == null) {
+			channel.sendMessage("No attribute found by the name: **" + attributeName + "** for " + profile.getName() + ".").queue();
+			return null;
+		}
+
+		return attribute;
 	}
 }

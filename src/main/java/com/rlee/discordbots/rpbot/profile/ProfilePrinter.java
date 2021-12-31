@@ -48,17 +48,47 @@ public class ProfilePrinter {
 				+ profile.getMember().getUser().getName() + "#" + profile.getMember().getUser().getDiscriminator() 
 				+ "\n" : "")
 				+ "\n";
-			
-		for (Attribute attribute : profile.getAttributes().values()) {
-			output += getAttributeDetail(attribute, formatOutput);
+
+		for (Attribute<?> attribute : profile.getAttributes().values()) {
+			if (attribute instanceof NumberAttribute) {
+				output += getNumberAttributeDetail((NumberAttribute) attribute, formatOutput);
+			} else {
+				output += getAttributeDetail(attribute, formatOutput);
+			}
+
 			output += "\n";
 		}
 		
 		return output;
 	}
-	
+
 	/**
-	 * Get a string detailing this attribute.
+	 * Get a string detailing this attribute. Spacing formatting is applied but otherwise it just prints the value directly
+	 * @param attribute
+	 * @param formatOutput Left-justify the name and attempt set the name and ":" character to width 5.
+	 * 						Attempt to right-justify the value and set width to 3
+	 * @return A string in format: &ltname&gt: &ltvalue&gt. Returns empty string if attribute == null
+	 *
+	 * @author R Lee
+	 */
+	private String getAttributeDetail(Attribute<?> attribute, boolean formatOutput) {
+		String output = "";
+
+		if (attribute == null) {
+			return output;
+		}
+
+		if (formatOutput) {
+			output = String.format("%-5s%3s", attribute.getName() + ":", attribute.getValue());
+		} else {
+			output = attribute.getName() + ": " + attribute.getValue();
+		}
+
+		return output;
+	}
+
+	/**
+	 * Get a string detailing this NumberAttribute.
 	 * @param attribute
 	 * @param formatOutput Left-justify the name and attempt set the name and ":" character to width 5.
 	 * 						Attempt to right-justify the value and set width to 3
@@ -66,19 +96,13 @@ public class ProfilePrinter {
 	 *
 	 * @author R Lee
 	 */
-	private String getAttributeDetail(Attribute attribute, boolean formatOutput) {
-		String output = "";
+	private String getNumberAttributeDetail(NumberAttribute attribute, boolean formatOutput) {
+		String output = getAttributeDetail(attribute, formatOutput);
 		
 		if (attribute == null) {
 			return output;
 		}
-		
-		if (formatOutput) {
-			output = String.format("%-5s%3s", attribute.getName() + ":", attribute.getValue());
-		} else {
-			output = attribute.getName() + ": " + attribute.getValue();
-		}
-		
+
 		String maxDetail = "";
 		if (attribute.hasMaxValue()) {
 			maxDetail = "/" + attribute.getMaxValue();
@@ -91,7 +115,7 @@ public class ProfilePrinter {
 			int dur = attribute.getBuffDuration();
 			
 			// Prints out buff detail in the format of:
-			// "+3 (5 rolls left)
+			// "+3 (5 rolls left)"
 			buffDetail = " " + (buff >= 0 ? "+" : "") + buff
 						+ " (" + dur + " roll" + (dur != 1 ? "s" : "") + " left)";
 		}
@@ -107,13 +131,19 @@ public class ProfilePrinter {
 		
 		return output;
 	}
-	
-	public void messageAttributeDetail(CharProfile profile, Attribute attribute, MessageChannel channel) {
+
+	public void messageAttributeDetail(CharProfile profile, Attribute<?> attribute, MessageChannel channel) {
 		if (profile == null || channel == null) {
 			return;
 		}
-		
-		String attrDetail = getAttributeDetail(attribute, false);
+
+		String attrDetail;
+		if (attribute instanceof NumberAttribute) {
+			attrDetail = getNumberAttributeDetail((NumberAttribute) attribute, false);
+		} else {
+			attrDetail = getAttributeDetail(attribute, false);
+		}
+
 		if (!attrDetail.isEmpty()) {
 			channel.sendMessage(profile.getName() + "'s " + attrDetail).queue();
 		}

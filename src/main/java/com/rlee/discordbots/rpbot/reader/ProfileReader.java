@@ -13,6 +13,8 @@ import com.rlee.discordbots.rpbot.RPBot;
 import com.rlee.discordbots.rpbot.Util;
 import com.rlee.discordbots.rpbot.exception.AttributeAlreadyExistsException;
 import com.rlee.discordbots.rpbot.profile.Attribute;
+import com.rlee.discordbots.rpbot.profile.ExpressionAttribute;
+import com.rlee.discordbots.rpbot.profile.NumberAttribute;
 import com.rlee.discordbots.rpbot.profile.CharProfile;
 import com.rlee.discordbots.rpbot.regitstry.ProfileRegistry;
 
@@ -118,10 +120,10 @@ public class ProfileReader {
 	}
 	
 	/**
-	 * Create a character profile from the given file path
-	 * @param filePath
+	 * Create a character profile from the given file
+	 * @param file
 	 * @param registry
-	 * @return
+	 * @return CharProfile generated or null if no file is given
 	 * @throws FileNotFoundException
 	 */
 	private CharProfile readProfileFromFile(File file, ProfileRegistry registry) throws FileNotFoundException {
@@ -159,21 +161,25 @@ public class ProfileReader {
 		
 		CharProfile profile = new CharProfile(registry);
 		String[] args = source.split(NEW_LINE);
-		
+
+		boolean hasName = false;
+		boolean hasMember = false;
+
 		//TODO: Change to iterator (allow for insertion)
 		for (String arg : args) {
-			try {
-				Attribute attribute = readAttribute(arg, profile);
-				if (attribute != null) {
-					profile.setAttribute(attribute.getName(), attribute);
-				}
-			} catch (AttributeAlreadyExistsException e) { 
-				continue; //Ignore repeated entry
-			} catch (NumberFormatException e) {
-				// TODO Add support for non-numeric entries (i.e. migrate name detection to non-numeric attribute)
-				checkReadName(arg, profile);
-				checkReadMemberName(arg, profile);
+			// Try reading name
+			if (!hasName && checkReadName(arg, profile)) {
+				hasName = true;
+				continue;
 			}
+
+			// Try reading member
+			if (!hasMember && checkReadMemberName(arg, profile)) {
+				hasMember = true;
+				continue;
+			}
+
+			readAttributeFromLine(arg, profile);
 		}
 
 		if (!isValidProfile(profile) || registry.containsName(profile.getName())) {
@@ -186,46 +192,74 @@ public class ProfileReader {
 		
 		return profile;
 	}
-	
-	public Attribute readAttribute(String line, CharProfile profile) throws NumberFormatException, AttributeAlreadyExistsException {
+
+	private void readAttributeFromLine(String line, CharProfile profile) {
+		Attribute<?> attribute;
+		try {
+			attribute = readNumberAttribute(line, profile);
+		} catch (AttributeAlreadyExistsException e) {
+			return; //Ignore repeated entry
+		} catch (NumberFormatException e) {
+			// Try reading as an ExpressionAttribute
+			try {
+				attribute = readExpressionAttribute(line, profile);
+			} catch (AttributeAlreadyExistsException attributeAlreadyExistsException) {
+				return; // Ignore repeated entry
+			}
+		}
+
+		if (attribute != null) {
+			profile.setAttribute(attribute.getName(), attribute);
+		}
+	}
+
+	public List<String> readAttributeKeyValue(String line, CharProfile profile) throws AttributeAlreadyExistsException {
 		final int KEY = 0;
 		final int VAL = 1;
-		
+
 		// Ignore lines that have no delimiter character
-		List<String> args = new ArrayList<String>(Arrays.asList(line.split(DELIMITER)));
-		
+		List<String> args = new ArrayList<>(Arrays.asList(line.split(DELIMITER)));
+
 		if (args.size() < 2) {
 			return null; // Skip lines that haven't been split
 		}
-		
+
 		if (args.get(KEY).isEmpty() || Util.replaceWhitespaces(args.get(VAL)).isEmpty()) {
 			return null; // Skip invalid entries (eg. "Key : : 3")
-			// For more than 2 args, simply ignore trailing args
-			// during operations
+			// For more than 2 args, simply ignore trailing args during operations
 		}
 
 		// Remove leading/tailing whitespace, replace spaces in middle with
 		// underscore, and make all chars lowercase on the key
 		args.set(KEY, Util.replaceWhitespaces(args.get(KEY), true));
-		// Do NOT edit innerArgs.get(VAL) until innerArgs[MAX_VAL] is
-		// extracted, if applicable
-		
+		// Do NOT edit innerArgs.get(VAL) until innerArgs[MAX_VAL] is extracted, if applicable
+
 		if (profile.getAttributes().containsKey(args.get(KEY))) {
 			throw new AttributeAlreadyExistsException(args.get(KEY));
 		}
-		
+
 		//Remove white spaces
 		args.set(VAL, Util.replaceWhitespaces(args.get(VAL)));
-		
-		// Remove leading '+' symbols if applicable (lenient conversion from
-		// string to int)
+
+		// Remove leading '+' symbols if applicable (lenient conversion from string to int)
 		if (args.get(VAL).charAt(0) == '+') {
 			args.set(VAL, args.get(VAL).substring(1));
 		}
 
-		Attribute attribute = new Attribute(args.get(KEY));
+		return args;
+	}
+
+	private NumberAttribute readNumberAttribute(String line, CharProfile profile) throws NumberFormatException, AttributeAlreadyExistsException {
+		List<String> args = readAttributeKeyValue(line, profile);
+		if (args == null) {
+			return null;
+		}
+		String attributeName = args.get(0);
+		String attributeValue = args.get(1);
+
+		NumberAttribute attribute = new NumberAttribute(attributeName);
 		attribute.setProfile(profile);
-		readAttributeValue(args.get(VAL), attribute);
+		readNumberAttributeValue(attributeValue, attribute);
 		
 		return attribute;
 	}
@@ -235,7 +269,7 @@ public class ProfileReader {
 	 * @param attributeValue
 	 * @param attribute
 	 */
-	private void readAttributeValue(String attributeValue, Attribute attribute) throws NumberFormatException {
+	private void readNumberAttributeValue(String attributeValue, NumberAttribute attribute) throws NumberFormatException {
 		final int VAL = 0;
 		final int MAX_VAL = 1;
 		
@@ -255,16 +289,29 @@ public class ProfileReader {
 			}
 		}
 	}
-	
+
+	public ExpressionAttribute readExpressionAttribute(String line, CharProfile profile) throws NumberFormatException, AttributeAlreadyExistsException {
+		List<String> args = readAttributeKeyValue(line, profile);
+		String attributeName = args.get(0);
+		String attributeValue = args.get(1);
+
+		ExpressionAttribute attribute = new ExpressionAttribute(attributeName);
+		attribute.setProfile(profile);
+		readExpressionAttributeValue(attributeValue, attribute);
+
+		return attribute;
+	}
+
+	private void readExpressionAttributeValue(String attributeValue, ExpressionAttribute attribute) {
+		attribute.setValue(attributeValue);
+	}
+
 	/**
 	 * Check the input string and profile to see if a name should be applied
 	 * If the profile already has a name, then this will do nothing
-	 * 
-	 * @deprecated KLUDGE method substitute for non-numeric attributes for profile reading
-	 * 			There exists no better alternative yet
+	 * @return Whether or not the name has been read and set correctly
 	 */
-	@Deprecated
-	private void checkReadName(String line, CharProfile profile) {
+	private boolean checkReadName(String line, CharProfile profile) {
 		final int KEY = 0;
 		final int VAL = 1;
 		
@@ -280,8 +327,12 @@ public class ProfileReader {
 				// AND the value for the name is not empty
 				
 				profile.setName(Util.replaceWhitespaces(args[VAL]));
+
+				return true;
 			}
 		}
+
+		return false;
 	}
 	
 	/**
@@ -293,37 +344,39 @@ public class ProfileReader {
 	 * - No user can be found for the given username on the guild
 	 * @param line
 	 * @param profile
-	 *
-	 * @deprecated KLUDGE method substitute for non-numeric attributes for profile reading
-	 * 			There exists no better alternative yet
+	 * @return Whether or not the member's name was successfully read
 	 */
-	@Deprecated
-	private void checkReadMemberName(String line, CharProfile profile) {
+	private boolean checkReadMemberName(String line, CharProfile profile) {
 		final int KEY = 0;
 		final int NAME = 1;
 		
 		if (profile.getMember() != null) {
-			return;
+			return false;
 		}
 		
 		//Manually parse out "name" field if applicable
 		String[] args = line.split(DELIMITER);
 		if (args.length < 2 || !args[KEY].equalsIgnoreCase("player")) {
-			return;
+			return false;
 		}
 		
 		args[NAME] = args[NAME].trim();
 		if (Util.isEmptyString(args[NAME])) {
-			return;
+			return false;
 		}
 		
 		String[] usernameArgs = args[NAME].split("#");
 		if (usernameArgs.length <= 0 || Util.isEmptyString(usernameArgs[0])) {
-			return;
+			return false;
 		}
 		boolean discriminatorProvided = usernameArgs.length >= 2 && !Util.isEmptyString(usernameArgs[1]);
 		
 		Guild guild = profile.getProfileRegistry().getGame().getGuild();
+		// TODO: guild.getMembersByName will return null until cache is fetched (https://github.com/DV8FromTheWorld/JDA#entity-lifetimes, https://github.com/DV8FromTheWorld/JDA/wiki/Gateway-Intents-and-Member-Cache-Policy)
+		//		Sol:
+		//		- Overhaul CharProfile to store by member ID instead of member object
+		//		- When getting message sender's profile, search profileRegistry by sender's ID
+		//		- &claimed command should show member tag if possible. Fallback to simply stating "already claimed"
 		List<Member> members = guild.getMembersByName(usernameArgs[0], true);
 		Member member = null;
 		
@@ -338,14 +391,15 @@ public class ProfileReader {
 				}
 			}
 		} else {
-			return;
+			return false;
 		}
 						
 		if (member == null || profile.getProfileRegistry().getProfile(member) != null) {
-			return;
+			return false;
 		}
 		
 		profile.getProfileRegistry().claimProfile(member, profile);
+		return true;
 	}
 	
 	public boolean isValidProfile(CharProfile profile) {
