@@ -24,7 +24,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class MessageListener extends ListenerAdapter {
 
-	public static String COMMAND_PREFIX = "&";	//Official RPBot
+	public static String COMMAND_PREFIX = "&";	// Official RPBot
 	private RollCalculator rollCalculator;
 	private MapCommandHandler mapCommandHandler;
 	
@@ -68,7 +68,6 @@ public class MessageListener extends ListenerAdapter {
 
 			MessageBuilder outputBuilder = new MessageBuilder();
 			outputBuilder.append(output);
-//			outputBuilder.setColor(Color.ORANGE);
 
 			channel.sendMessage(outputBuilder.build()).queue();
 		}
@@ -244,52 +243,6 @@ public class MessageListener extends ListenerAdapter {
 			break;
 		}
 		case "set": case "setattr": {
-			// FIXME: Delete this block
-//			if (!cmdParser.validateParameterLength(new String[] {"attribute", "value"}, "\b/max\\_value", "character")) {
-//				break;
-//			}
-//
-//			CharProfile profile = getProfileOrSendError(args.length > 3 ? args[3] : null, game, member, channel);
-//			if (profile == null) {
-//				break;
-//			}
-//
-//			NumberAttribute attribute = game.getAliasRegistry().getAttribute(args[1], profile);
-//			if (attribute == null) {
-//				//Insert a new attribute
-//				//TODO Set the following code into constructor of Attribute
-//				attribute = new NumberAttribute(args[1]);
-//				attribute.setProfile(profile);
-//				profile.setAttribute(args[1], attribute);
-//			}
-//
-//			String[] values = args[2].split("/"); //TODO Remove magic value
-//			Integer value = null, maxValue = null;
-//			try {
-//				value = Integer.valueOf(values[0]);
-//			} catch (NumberFormatException e) {
-//				channel.sendMessage("Sorry, **" + values[0] + "** is not recognized as a number").queue();
-//				break;
-//			}
-//
-//			if (values.length >= 2 && !values[1].isEmpty()) {
-//				//Max value has been found
-//				try {
-//					maxValue = Integer.valueOf(values[1]);
-//				} catch (NumberFormatException e) {
-//					channel.sendMessage("Sorry, **" + values[1] + "** is not recognized as a number").queue();
-//					break;
-//				}
-//			}
-//
-//			attribute.setValue(value, true);
-//			if (maxValue != null) {
-//				attribute.setMaxValue(maxValue);
-//			}
-//
-//			ProfilePrinter profilePrinter = new ProfilePrinter();
-//			profilePrinter.messageAttributeDetail(profile, attribute, channel);
-
 			setAttributeCmd(args, game, channel, member);
 			break;
 		}
@@ -393,7 +346,7 @@ public class MessageListener extends ListenerAdapter {
 				return;
 			}
 
-			channel.sendMessage(member.getAsMention() + " has claimed **" + profile.getName() + "**.").queue();
+			channel.sendMessage(member.getAsMention() + " has claimed the profile **" + profile.getName() + "**.").queue();
 		} else {
 			// Fall back to trying to resolve by profile name
 			printProfileOwnerCmd(target, game, channel);

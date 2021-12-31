@@ -369,6 +369,11 @@ public class ProfileReader {
 		boolean discriminatorProvided = usernameArgs.length >= 2 && !Util.isEmptyString(usernameArgs[1]);
 		
 		Guild guild = profile.getProfileRegistry().getGame().getGuild();
+		// TODO: guild.getMembersByName will return null until cache is fetched (https://github.com/DV8FromTheWorld/JDA#entity-lifetimes, https://github.com/DV8FromTheWorld/JDA/wiki/Gateway-Intents-and-Member-Cache-Policy)
+		//		Sol:
+		//		- Overhaul CharProfile to store by member ID instead of member object
+		//		- When getting message sender's profile, search profileRegistry by sender's ID
+		//		- &claimed command should show member tag if possible. Fallback to simply stating "already claimed"
 		List<Member> members = guild.getMembersByName(usernameArgs[0], true);
 		Member member = null;
 		
