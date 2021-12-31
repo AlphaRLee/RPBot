@@ -161,34 +161,25 @@ public class ProfileReader {
 		
 		CharProfile profile = new CharProfile(registry);
 		String[] args = source.split(NEW_LINE);
-		
+
+		boolean hasName = false;
+		boolean hasMember = false;
+
 		//TODO: Change to iterator (allow for insertion)
 		for (String arg : args) {
-			Attribute<?> attribute;
-			try {
-				attribute = readNumberAttribute(arg, profile);
-			} catch (AttributeAlreadyExistsException e) { 
-				continue; //Ignore repeated entry
-			} catch (NumberFormatException e) {
-				// FIXME: Add support for non-numeric entries (i.e. migrate name detection to non-numeric attribute)
-				if (checkReadName(arg, profile)) {
-					continue;
-				}
-				if (checkReadMemberName(arg, profile)) {
-					continue;
-				}
-
-				// Try reading as an ExpressionAttribute
-				try {
-					attribute = readExpressionAttribute(arg, profile);
-				} catch (AttributeAlreadyExistsException attributeAlreadyExistsException) {
-					continue; // Ignore repeated entry
-				}
+			// Try reading name
+			if (!hasName && checkReadName(arg, profile)) {
+				hasName = true;
+				continue;
 			}
 
-			if (attribute != null) {
-				profile.setAttribute(attribute.getName(), attribute);
+			// Try reading member
+			if (!hasMember && checkReadMemberName(arg, profile)) {
+				hasMember = true;
+				continue;
 			}
+
+			readAttributeFromLine(arg, profile);
 		}
 
 		if (!isValidProfile(profile) || registry.containsName(profile.getName())) {
@@ -200,6 +191,26 @@ public class ProfileReader {
 		}
 		
 		return profile;
+	}
+
+	private void readAttributeFromLine(String line, CharProfile profile) {
+		Attribute<?> attribute;
+		try {
+			attribute = readNumberAttribute(line, profile);
+		} catch (AttributeAlreadyExistsException e) {
+			return; //Ignore repeated entry
+		} catch (NumberFormatException e) {
+			// Try reading as an ExpressionAttribute
+			try {
+				attribute = readExpressionAttribute(line, profile);
+			} catch (AttributeAlreadyExistsException attributeAlreadyExistsException) {
+				return; // Ignore repeated entry
+			}
+		}
+
+		if (attribute != null) {
+			profile.setAttribute(attribute.getName(), attribute);
+		}
 	}
 
 	public List<String> readAttributeKeyValue(String line, CharProfile profile) throws AttributeAlreadyExistsException {
@@ -299,11 +310,7 @@ public class ProfileReader {
 	 * Check the input string and profile to see if a name should be applied
 	 * If the profile already has a name, then this will do nothing
 	 * @return Whether or not the name has been read and set correctly
-	 *
-	 * @deprecated KLUDGE method substitute for non-numeric attributes for profile reading
-	 * 			There exists no better alternative yet
 	 */
-	@Deprecated
 	private boolean checkReadName(String line, CharProfile profile) {
 		final int KEY = 0;
 		final int VAL = 1;
@@ -338,11 +345,7 @@ public class ProfileReader {
 	 * @param line
 	 * @param profile
 	 * @return Whether or not the member's name was successfully read
-	 *
-	 * @deprecated KLUDGE method substitute for non-numeric attributes for profile reading
-	 * 			There exists no better alternative yet
 	 */
-	@Deprecated
 	private boolean checkReadMemberName(String line, CharProfile profile) {
 		final int KEY = 0;
 		final int NAME = 1;
